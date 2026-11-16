@@ -1,0 +1,1127 @@
+<!DOCTYPE html>
+<html lang="en" class="scroll-smooth">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Khagaria Health Hub & Accident Awareness Platform</title>
+    
+    <!-- Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    
+    <!-- FontAwesome Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <!-- Leaflet CSS -->
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    
+    <!-- Tailwind Config -->
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: {
+                        sans: ['Inter', 'sans-serif'],
+                    },
+                    colors: {
+                        brand: {
+                            50: '#eff6ff',
+                            100: '#dbeafe',
+                            500: '#3b82f6',
+                            600: '#2563eb',
+                            700: '#1d4ed8',
+                            900: '#1e3a8a',
+                        },
+                        health: {
+                            500: '#10b981',
+                            600: '#059669',
+                            700: '#047857',
+                        },
+                        danger: {
+                            500: '#ef4444',
+                            600: '#dc2626',
+                            700: '#b91c1c',
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        body { padding-bottom: 90px; }
+        #map { height: 480px; width: 100%; z-index: 10; border-radius: 1rem; }
+        .hero-pattern {
+            background-color: #1e3a8a;
+            background-image: radial-gradient(#2563eb 1.5px, transparent 1.5px);
+            background-size: 24px 24px;
+        }
+        /* Custom map label badges matching reference */
+        .map-label-badge {
+            background: #1e40af;
+            color: white;
+            padding: 2px 8px;
+            font-size: 10px;
+            font-weight: 700;
+            border-radius: 4px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+            white-space: nowrap;
+        }
+        .river-label-badge {
+            background: #2563eb;
+            color: white;
+            padding: 1px 6px;
+            font-size: 9px;
+            font-style: italic;
+            font-weight: 600;
+            border-radius: 3px;
+            opacity: 0.9;
+        }
+        /* Custom scrollbar for mobile drawers */
+        ::-webkit-scrollbar { width: 6px; height: 6px; }
+        ::-webkit-scrollbar-track { background: #f1f5f9; }
+        ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 3px; }
+    </style>
+</head>
+<body class="font-sans text-gray-800 bg-gray-50 antialiased selection:bg-brand-500 selection:text-white">
+
+    <!-- Toast Notification Container -->
+    <div id="toast-container" class="fixed top-20 right-4 z-[200] space-y-2 pointer-events-none"></div>
+
+    <!-- Top Navigation Bar -->
+    <nav class="bg-white shadow-md sticky top-0 z-50">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex justify-between h-20 items-center">
+                <div class="flex items-center gap-3 cursor-pointer" onclick="switchRole('public')">
+                    <div class="bg-brand-600 text-white p-2.5 rounded-xl shadow-sm">
+                        <i class="fa-solid fa-house-medical text-xl"></i>
+                    </div>
+                    <div>
+                        <span class="font-extrabold text-lg sm:text-xl tracking-tight text-gray-900 block leading-tight">Gramin<span class="text-brand-600">Health</span></span>
+                        <span class="text-xs text-gray-500 font-medium">Khagaria Rural Hub Network</span>
+                    </div>
+                </div>
+
+                <!-- Role Switcher Tabs -->
+                <div class="hidden lg:flex items-center bg-gray-100 p-1.5 rounded-xl border border-gray-200">
+                    <button onclick="switchRole('public')" id="nav-btn-public" class="px-4 py-2 rounded-lg text-sm font-semibold transition-all bg-white text-brand-600 shadow-sm">
+                        <i class="fa-solid fa-users mr-1.5"></i> Public Portal
+                    </button>
+                    <button onclick="requestRoleAccess('hub')" id="nav-btn-hub" class="px-4 py-2 rounded-lg text-sm font-semibold transition-all text-gray-600 hover:text-gray-900">
+                        <i class="fa-solid fa-user-nurse mr-1.5"></i> Health Hub Staff
+                    </button>
+                    <button onclick="requestRoleAccess('official')" id="nav-btn-official" class="px-4 py-2 rounded-lg text-sm font-semibold transition-all text-gray-600 hover:text-gray-900">
+                        <i class="fa-solid fa-building-shield mr-1.5"></i> Officials / Police
+                    </button>
+                    <button onclick="requestRoleAccess('hospital')" id="nav-btn-hospital" class="px-4 py-2 rounded-lg text-sm font-semibold transition-all text-gray-600 hover:text-gray-900">
+                        <i class="fa-solid fa-hospital mr-1.5"></i> Receiving Hospital
+                    </button>
+                </div>
+
+                <!-- Right Actions: Language & Mobile Menu -->
+                <div class="flex items-center gap-3">
+                    <button onclick="toggleLanguage()" id="lang-btn" class="bg-gray-100 hover:bg-gray-200 text-gray-700 font-bold px-3 py-2 rounded-xl text-xs sm:text-sm transition-colors border border-gray-200 flex items-center gap-1.5">
+                        <i class="fa-solid fa-globe text-brand-600"></i> <span id="lang-text">हिंदी</span>
+                    </button>
+                    <button onclick="toggleMobileMenu()" class="lg:hidden text-gray-700 bg-gray-100 p-2.5 rounded-xl hover:bg-gray-200">
+                        <i class="fa-solid fa-bars text-xl"></i>
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Mobile Drawer Menu -->
+        <div id="mobile-menu" class="hidden lg:hidden bg-white border-b border-gray-200 px-4 pt-2 pb-6 space-y-2 shadow-lg">
+            <button onclick="switchRole('public'); toggleMobileMenu();" class="w-full text-left px-4 py-3 rounded-xl font-semibold bg-brand-50 text-brand-600 flex items-center gap-3">
+                <i class="fa-solid fa-users text-lg"></i> Public Portal (Villager)
+            </button>
+            <button onclick="requestRoleAccess('hub'); toggleMobileMenu();" class="w-full text-left px-4 py-3 rounded-xl font-semibold text-gray-700 hover:bg-gray-50 flex items-center gap-3">
+                <i class="fa-solid fa-user-nurse text-lg text-health-600"></i> Village Health Hub Portal (PIN)
+            </button>
+            <button onclick="requestRoleAccess('official'); toggleMobileMenu();" class="w-full text-left px-4 py-3 rounded-xl font-semibold text-gray-700 hover:bg-gray-50 flex items-center gap-3">
+                <i class="fa-solid fa-building-shield text-lg text-amber-600"></i> Official Verifier Portal (PIN)
+            </button>
+            <button onclick="requestRoleAccess('hospital'); toggleMobileMenu();" class="w-full text-left px-4 py-3 rounded-xl font-semibold text-gray-700 hover:bg-gray-50 flex items-center gap-3">
+                <i class="fa-solid fa-hospital text-lg text-purple-600"></i> Receiving Hospital Dashboard (PIN)
+            </button>
+        </div>
+    </nav>
+
+    <!-- ==================== MAIN CONTENT VIEWS ==================== -->
+    <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
+
+        <!-- VIEW 1: PUBLIC / VILLAGER MODE -->
+        <div id="view-public" class="role-view space-y-8">
+            
+            <!-- Good Samaritan Assurance Banner -->
+            <div class="bg-gradient-to-r from-emerald-600 to-teal-700 text-white rounded-2xl p-5 sm:p-6 shadow-lg flex flex-col md:flex-row items-center justify-between gap-4 border border-emerald-500/30">
+                <div class="flex items-center gap-4 text-center md:text-left">
+                    <div class="bg-white/10 p-3.5 rounded-xl shrink-0 hidden sm:flex">
+                        <i class="fa-solid fa-shield-halved text-3xl text-emerald-200"></i>
+                    </div>
+                    <div>
+                        <h3 class="font-bold text-lg sm:text-xl" data-i18n="gs_title">Good Samaritan Legal Protection Assured</h3>
+                        <p class="text-emerald-100 text-sm mt-1" data-i18n="gs_desc">You will NOT be detained, questioned, or asked for identity/money at hospitals or police stations when saving an accident victim.</p>
+                    </div>
+                </div>
+                <div class="shrink-0">
+                    <button onclick="showSmsModal()" class="bg-white text-emerald-800 hover:bg-emerald-50 font-bold px-5 py-3 rounded-xl text-sm shadow transition-all flex items-center gap-2">
+                        <i class="fa-solid fa-comment-sms"></i> <span data-i18n="sms_fallback_btn">Offline SMS Gateway</span>
+                    </button>
+                </div>
+            </div>
+
+            <!-- Hero Action & Driver Alert Simulator Banner -->
+            <div class="bg-white rounded-3xl p-6 sm:p-8 shadow-sm border border-gray-200 grid grid-cols-1 lg:grid-cols-3 gap-8">
+                
+                <!-- Left: 1-Tap Report Crash Form -->
+                <div class="lg:col-span-2 space-y-6">
+                    <div>
+                        <span class="inline-block py-1 px-3 rounded-full bg-danger-50 text-danger-600 text-xs font-bold uppercase tracking-wider mb-2">
+                            <i class="fa-solid fa-triangle-exclamation mr-1"></i> <span data-i18n="badge_emergency">Emergency Action</span>
+                        </span>
+                        <h1 class="text-2xl sm:text-4xl font-extrabold text-gray-900 tracking-tight" data-i18n="hero_heading">1-Tap Anonymous Crash & Hazard Reporting</h1>
+                        <p class="text-gray-600 mt-2 text-sm sm:text-base" data-i18n="hero_sub">No names or phone numbers required. Instantly alert nearby hubs, 108 ambulances, and warn oncoming traffic.</p>
+                    </div>
+
+                    <div class="bg-gray-50 rounded-2xl p-5 border border-gray-200 space-y-4">
+                        <div class="flex flex-col sm:flex-row gap-3">
+                            <button onclick="autoLocateGPS()" class="flex-1 bg-danger-600 hover:bg-danger-700 text-white font-bold py-4 px-6 rounded-xl shadow-md transition-all flex items-center justify-center gap-3 text-base">
+                                <i class="fa-solid fa-location-crosshairs text-xl animate-pulse"></i>
+                                <span data-i18n="btn_autolocate">Use My Current GPS Location</span>
+                            </button>
+                            <button onclick="triggerVoiceRecord()" id="voice-btn" class="bg-white hover:bg-gray-100 text-gray-700 font-bold py-4 px-5 rounded-xl border border-gray-300 shadow-sm transition-all flex items-center justify-center gap-2">
+                                <i class="fa-solid fa-microphone text-brand-600 text-lg"></i>
+                                <span data-i18n="btn_voicenote">10s Voice Note</span>
+                            </button>
+                        </div>
+
+                        <!-- Quick Hazard Tags -->
+                        <div>
+                            <label class="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-2" data-i18n="lbl_hazards">Select Hazard Factors:</label>
+                            <div class="flex flex-wrap gap-2" id="hazard-tags">
+                                <button onclick="toggleTag(this)" data-tag="Over-speeding" class="px-3.5 py-2 rounded-xl text-xs font-semibold bg-white border border-gray-300 text-gray-700 hover:border-brand-500 transition-all">🏎️ Over-speeding</button>
+                                <button onclick="toggleTag(this)" data-tag="Two-Wheeler Crash" class="px-3.5 py-2 rounded-xl text-xs font-semibold bg-white border border-gray-300 text-gray-700 hover:border-brand-500 transition-all">🏍️ Two-Wheeler</button>
+                                <button onclick="toggleTag(this)" data-tag="Pedestrian Struck" class="px-3.5 py-2 rounded-xl text-xs font-semibold bg-white border border-gray-300 text-gray-700 hover:border-brand-500 transition-all">🚶 Pedestrian Struck</button>
+                                <button onclick="toggleTag(this)" data-tag="No Street Lighting" class="px-3.5 py-2 rounded-xl text-xs font-semibold bg-white border border-gray-300 text-gray-700 hover:border-brand-500 transition-all">🌙 No Street Light</button>
+                                <button onclick="toggleTag(this)" data-tag="Wrong-side Driving" class="px-3.5 py-2 rounded-xl text-xs font-semibold bg-white border border-gray-300 text-gray-700 hover:border-brand-500 transition-all">⚠️ Wrong-side</button>
+                            </div>
+                        </div>
+
+                        <button onclick="submitCrashReport()" class="w-full bg-brand-600 hover:bg-brand-700 text-white font-bold py-3.5 px-6 rounded-xl shadow transition-all flex items-center justify-center gap-2">
+                            <i class="fa-solid fa-paper-plane"></i> <span data-i18n="btn_submit_report">Broadcast Anonymous Crash Pin</span>
+                        </button>
+                    </div>
+
+                    <!-- Direct Illness Referral Request for Villagers -->
+                    <div class="bg-blue-50 rounded-2xl p-5 border border-blue-200">
+                        <h3 class="font-bold text-blue-900 text-base mb-1 flex items-center gap-2">
+                            <i class="fa-solid fa-stethoscope text-brand-600"></i> <span data-i18n="illness_req_title">Have an Unresolved Illness or Emergency Need?</span>
+                        </h3>
+                        <p class="text-xs text-blue-700 mb-3" data-i18n="illness_req_desc">Request a priority token for the nearest Village Health Hub or hospital referral.</p>
+                        <div class="grid grid-cols-1 sm:grid-cols-3 gap-2">
+                            <input type="text" id="illness-name" placeholder="Your Name (Optional)" class="bg-white px-3 py-2.5 rounded-xl border border-blue-200 text-sm focus:outline-none focus:ring-2 focus:ring-brand-500">
+                            <select id="illness-type" class="bg-white px-3 py-2.5 rounded-xl border border-blue-200 text-sm focus:outline-none focus:ring-2 focus:ring-brand-500">
+                                <option value="Fever/Infection">🌡️ High Fever / Infection</option>
+                                <option value="Chest Pain">❤️ Chest Pain / Cardiac</option>
+                                <option value="Snakebite">🐍 Snakebite / Poisoning</option>
+                                <option value="Trauma/Fracture">🦴 Fracture / Trauma</option>
+                                <option value="Pediatric">👶 Pediatric Emergency</option>
+                            </select>
+                            <button onclick="submitIllnessRequest()" class="bg-brand-600 hover:bg-brand-700 text-white font-bold py-2.5 px-4 rounded-xl text-sm shadow transition-all">
+                                <span data-i18n="btn_req_token">Get Hub Token</span>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Right: Driver Alert Mode Simulator & Quick Info -->
+                <div class="space-y-6 flex flex-col justify-between">
+                    <div class="bg-gradient-to-br from-gray-900 to-gray-800 text-white rounded-2xl p-5 shadow-inner space-y-4">
+                        <div class="flex items-center justify-between">
+                            <div class="flex items-center gap-2">
+                                <i class="fa-solid fa-volume-high text-amber-400 text-lg animate-pulse"></i>
+                                <span class="font-bold text-sm uppercase tracking-wide" data-i18n="driver_alert_title">Driver Alert Mode</span>
+                            </div>
+                            <span class="bg-emerald-500 text-white text-[10px] font-extrabold px-2 py-0.5 rounded-full uppercase" data-i18n="status_active">Active</span>
+                        </div>
+                        <p class="text-xs text-gray-300 leading-relaxed" data-i18n="driver_alert_desc">Background simulation speaks audio warnings in local language when within 500m of verified Black Spots.</p>
+                        <div class="bg-white/10 rounded-xl p-3 text-center border border-white/10">
+                            <p class="text-xs text-amber-300 font-mono font-bold" id="simulated-status">📍 GPS Active: Khagaria NH-31 Stretch</p>
+                            <button onclick="testAudioWarning()" class="mt-2 w-full bg-amber-500 hover:bg-amber-600 text-gray-950 font-extrabold py-2 px-3 rounded-lg text-xs transition-all">
+                                <i class="fa-solid fa-play mr-1"></i> <span data-i18n="btn_test_audio">Test Hindi Audio Warning</span>
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Quick Map Summary -->
+                    <div class="bg-gray-50 rounded-2xl p-5 border border-gray-200 space-y-3">
+                        <h4 class="font-bold text-xs text-gray-500 uppercase tracking-wider">Khagaria District Corridor</h4>
+                        <p class="text-xs text-gray-600">Bridging National Highway 31 with Burhi Gandak and Kosi river basins for rapid rural medical triage.</p>
+                    </div>
+                </div>
+
+            </div>
+
+            <!-- Leaflet Interactive Map Section with Exact Reference Styling & Interactive Legend -->
+            <div class="bg-white rounded-3xl p-6 shadow-sm border border-gray-200 space-y-4">
+                <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+                    <div>
+                        <h2 class="text-xl font-bold text-gray-900" data-i18n="map_section_title">Khagaria District Live Accident & Hub Map</h2>
+                        <p class="text-xs text-gray-500" data-i18n="map_section_sub">Real-time vector sync with district boundary, regional corridors, and 108 dispatch.</p>
+                    </div>
+                    <div class="flex items-center gap-2">
+                        <button onclick="resetMapView()" class="bg-gray-100 hover:bg-gray-200 text-gray-700 font-semibold px-3 py-1.5 rounded-lg text-xs transition-colors">
+                            <i class="fa-solid fa-compass mr-1"></i> Center Khagaria
+                        </button>
+                    </div>
+                </div>
+                
+                <div class="relative">
+                    <div id="map"></div>
+                    
+                    <!-- Interactive Map Legend (Matching Reference Image) -->
+                    <div class="absolute bottom-4 left-4 z-[400] bg-white/95 backdrop-blur-sm px-4 py-3 rounded-2xl shadow-xl border border-gray-200 flex flex-wrap items-center gap-4 text-xs font-semibold text-gray-700">
+                        <div class="flex items-center gap-2">
+                            <div class="w-4 h-4 rounded-full bg-yellow-400 border border-yellow-600 shrink-0"></div>
+                            <span>Unverified</span>
+                        </div>
+                        <div class="flex items-center gap-2">
+                            <div class="w-4 h-4 rounded-full bg-amber-500 border border-amber-700 shrink-0"></div>
+                            <span>Provisional</span>
+                        </div>
+                        <div class="flex items-center gap-2">
+                            <div class="w-4 h-4 rounded-full bg-red-600 border border-black shrink-0"></div>
+                            <span>Black spot</span>
+                        </div>
+                        <div class="flex items-center gap-2">
+                            <div class="w-4 h-4 rounded-full bg-emerald-600 border border-white flex items-center justify-center text-white text-[10px] font-bold shrink-0">+</div>
+                            <span>Health Hub</span>
+                        </div>
+                        <div class="flex items-center gap-2">
+                            <div class="w-4 h-4 rounded bg-blue-600 border border-white flex items-center justify-center text-white text-[10px] font-bold shrink-0">H</div>
+                            <span>Hospital</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- VIEW 2: VILLAGE HEALTH HUB PORTAL -->
+        <div id="view-hub" class="role-view hidden space-y-8">
+            <div class="bg-emerald-800 text-white rounded-3xl p-6 sm:p-8 shadow-md flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+                <div>
+                    <span class="bg-emerald-700 text-emerald-100 text-xs font-bold px-3 py-1 rounded-full uppercase tracking-wider">PIN Authenticated</span>
+                    <h1 class="text-2xl sm:text-3xl font-extrabold mt-2">Village Health Hub Portal (Aluli / Mansi Cluster)</h1>
+                    <p class="text-emerald-100 text-sm mt-1">Managed by Hub Nurses, Physicians, and Certified Health Workers.</p>
+                </div>
+                <button onclick="switchRole('public')" class="bg-white/10 hover:bg-white/20 text-white font-bold px-4 py-2.5 rounded-xl text-sm transition-all border border-white/20">
+                    <i class="fa-solid fa-arrow-left mr-1"></i> Exit Hub Portal
+                </button>
+            </div>
+
+            <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+                <!-- 3-Step Triage & Stabilization Checklist -->
+                <div class="lg:col-span-2 bg-white rounded-3xl p-6 sm:p-8 shadow-sm border border-gray-200 space-y-6">
+                    <h2 class="text-xl font-bold text-gray-900 flex items-center gap-2">
+                        <i class="fa-solid fa-clipboard-list text-health-600"></i> Emergency Triage & Stabilization Checklist
+                    </h2>
+
+                    <div class="space-y-6">
+                        <!-- Step 1 -->
+                        <div class="bg-gray-50 p-5 rounded-2xl border border-gray-200 space-y-3">
+                            <div class="flex items-center justify-between">
+                                <span class="bg-brand-600 text-white text-xs font-bold px-2.5 py-1 rounded-lg">Step 1</span>
+                                <span class="text-xs font-semibold text-gray-500">Patient Arrives at Hub</span>
+                            </div>
+                            <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                                <input type="text" id="triage-patient-name" placeholder="Patient Name / ID" class="bg-white px-3 py-2 rounded-xl border border-gray-300 text-sm">
+                                <select id="triage-severity" class="bg-white px-3 py-2 rounded-xl border border-gray-300 text-sm">
+                                    <option value="Critical Trauma">🚨 Critical Trauma / Severe Bleeding</option>
+                                    <option value="Snakebite">🐍 Snakebite / Acute Poisoning</option>
+                                    <option value="Respiratory">🫁 Severe Respiratory Distress</option>
+                                    <option value="Minor Injury">🩹 Minor Laceration / Fracture</option>
+                                </select>
+                            </div>
+                        </div>
+
+                        <!-- Step 2 -->
+                        <div class="bg-gray-50 p-5 rounded-2xl border border-gray-200 space-y-3">
+                            <div class="flex items-center justify-between">
+                                <span class="bg-brand-600 text-white text-xs font-bold px-2.5 py-1 rounded-lg">Step 2</span>
+                                <span class="text-xs font-semibold text-gray-500">Record Vitals</span>
+                            </div>
+                            <div class="grid grid-cols-2 sm:grid-cols-4 gap-3">
+                                <input type="text" id="vitals-bp" placeholder="BP (e.g. 120/80)" class="bg-white px-3 py-2 rounded-xl border border-gray-300 text-sm">
+                                <input type="text" id="vitals-hr" placeholder="Heart Rate" class="bg-white px-3 py-2 rounded-xl border border-gray-300 text-sm">
+                                <input type="text" id="vitals-spo2" placeholder="SpO2 %" class="bg-white px-3 py-2 rounded-xl border border-gray-300 text-sm">
+                                <input type="text" id="vitals-gcs" placeholder="GCS Score" class="bg-white px-3 py-2 rounded-xl border border-gray-300 text-sm">
+                            </div>
+                        </div>
+
+                        <!-- Step 3 -->
+                        <div class="bg-gray-50 p-5 rounded-2xl border border-gray-200 space-y-3">
+                            <div class="flex items-center justify-between">
+                                <span class="bg-brand-600 text-white text-xs font-bold px-2.5 py-1 rounded-lg">Step 3</span>
+                                <span class="text-xs font-semibold text-gray-500">Stabilization & Decision</span>
+                            </div>
+                            <div class="flex flex-wrap gap-2">
+                                <label class="flex items-center gap-2 bg-white px-3 py-2 rounded-xl border border-gray-300 text-xs font-medium cursor-pointer">
+                                    <input type="checkbox" id="stab-oxygen" class="rounded text-brand-600"> Oxygen Started
+                                </label>
+                                <label class="flex items-center gap-2 bg-white px-3 py-2 rounded-xl border border-gray-300 text-xs font-medium cursor-pointer">
+                                    <input type="checkbox" id="stab-iv" class="rounded text-brand-600"> IV Fluids Secured
+                                </label>
+                                <label class="flex items-center gap-2 bg-white px-3 py-2 rounded-xl border border-gray-300 text-xs font-medium cursor-pointer">
+                                    <input type="checkbox" id="stab-splint" class="rounded text-brand-600"> Splinted / Bleeding Stopped
+                                </label>
+                            </div>
+                            <div class="pt-2 flex flex-col sm:flex-row gap-3">
+                                <button onclick="completeHubTriage('Treat Locally')" class="flex-1 bg-health-600 hover:bg-health-700 text-white font-bold py-3 px-4 rounded-xl text-sm transition-all shadow-sm">
+                                    ✅ Treated at Hub (Decongest Hospital)
+                                </button>
+                                <button onclick="completeHubTriage('Refer to Hospital')" class="flex-1 bg-danger-600 hover:bg-danger-700 text-white font-bold py-3 px-4 rounded-xl text-sm transition-all shadow-sm">
+                                    🚨 Generate Hospital Referral Ticket
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Everyday Illness Tracker & Active Tickets -->
+                <div class="space-y-6">
+                    <div class="bg-white rounded-3xl p-6 shadow-sm border border-gray-200 space-y-4">
+                        <h3 class="font-bold text-gray-900 text-lg flex items-center gap-2">
+                            <i class="fa-solid fa-notes-medical text-brand-600"></i> Everyday Illness Tracker
+                        </h3>
+                        <p class="text-xs text-gray-500">Log minor fevers, seasonal infections, and wounds treated locally.</p>
+                        <div class="space-y-3">
+                            <input type="text" id="illness-log-desc" placeholder="Condition (e.g. Viral Fever - 5 cases)" class="w-full bg-gray-50 px-3 py-2 rounded-xl border border-gray-300 text-sm">
+                            <button onclick="logEverydayIllness()" class="w-full bg-brand-600 hover:bg-brand-700 text-white font-bold py-2.5 px-4 rounded-xl text-sm transition-all">
+                                Log Local Treatment
+                            </button>
+                        </div>
+                        <div class="border-t border-gray-100 pt-3 mt-3">
+                            <p class="text-xs font-bold text-gray-500 uppercase">Today's Local Cases:</p>
+                            <div id="illness-log-list" class="mt-2 space-y-2 text-xs">
+                                <div class="bg-gray-50 p-2.5 rounded-xl flex justify-between items-center border border-gray-200">
+                                    <span>Viral Fever (Aluli Cluster)</span>
+                                    <span class="font-bold text-health-600">14 Cases</span>
+                                </div>
+                                <div class="bg-gray-50 p-2.5 rounded-xl flex justify-between items-center border border-gray-200">
+                                    <span>Minor Lacerations</span>
+                                    <span class="font-bold text-health-600">6 Cases</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="bg-white rounded-3xl p-6 shadow-sm border border-gray-200 space-y-3">
+                        <h3 class="font-bold text-gray-900 text-md flex items-center gap-2">
+                            <i class="fa-solid fa-qrcode text-purple-600"></i> Active Digital Referral Ticket
+                        </h3>
+                        <div id="referral-ticket-display" class="bg-gray-50 p-4 rounded-2xl border border-gray-200 text-xs space-y-2 text-center">
+                            <p class="text-gray-500 font-medium">No active referral generated yet. Complete triage and click 'Generate Hospital Referral Ticket'.</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- VIEW 3: OFFICIAL VERIFIER PORTAL -->
+        <div id="view-official" class="role-view hidden space-y-8">
+            <div class="bg-amber-800 text-white rounded-3xl p-6 sm:p-8 shadow-md flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+                <div>
+                    <span class="bg-amber-700 text-amber-100 text-xs font-bold px-3 py-1 rounded-full uppercase tracking-wider">Role-Based ID Login</span>
+                    <h1 class="text-2xl sm:text-3xl font-extrabold mt-2">Official Verifier & Black-Spot Engine</h1>
+                    <p class="text-amber-100 text-sm mt-1">Used by Police, 108 Ambulance Coordinators, and Panchayat Leaders.</p>
+                </div>
+                <button onclick="switchRole('public')" class="bg-white/10 hover:bg-white/20 text-white font-bold px-4 py-2.5 rounded-xl text-sm transition-all border border-white/20">
+                    <i class="fa-solid fa-arrow-left mr-1"></i> Exit Official Portal
+                </button>
+            </div>
+
+            <div class="bg-white rounded-3xl p-6 sm:p-8 shadow-sm border border-gray-200 space-y-6">
+                <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+                    <div>
+                        <h2 class="text-xl font-bold text-gray-900">Incoming Public Crash Verification Queue</h2>
+                        <p class="text-xs text-gray-500">Cross-check public pins with 108 ambulance pickup logs and police FIR data.</p>
+                    </div>
+                    <div class="flex gap-2">
+                        <span class="bg-amber-50 text-amber-700 border border-amber-200 px-3 py-1.5 rounded-xl text-xs font-bold">Pending Review: 3 Stretches</span>
+                    </div>
+                </div>
+
+                <!-- Verification Queue Table -->
+                <div class="overflow-x-auto">
+                    <table class="w-full text-left text-sm">
+                        <thead class="bg-gray-50 text-gray-500 uppercase text-xs border-b border-gray-200">
+                            <tr>
+                                <th class="p-3.5">Location / Stretch</th>
+                                <th class="p-3.5">Bystander Tags</th>
+                                <th class="p-3.5">Timestamp</th>
+                                <th class="p-3.5">108 / FIR Cross-Check</th>
+                                <th class="p-3.5 text-right">Two-Tier Action</th>
+                            </tr>
+                        </thead>
+                        <tbody class="divide-y divide-gray-100 text-xs sm:text-sm">
+                            <tr class="hover:bg-gray-50">
+                                <td class="p-3.5 font-bold text-gray-900">NH-31 Near Gogri Jamalpur Crossing</td>
+                                <td class="p-3.5"><span class="bg-red-50 text-danger-600 px-2.5 py-1 rounded-lg font-semibold">Over-speeding, No Light</span></td>
+                                <td class="p-3.5 text-gray-500">12 mins ago</td>
+                                <td class="p-3.5"><span class="text-health-600 font-semibold">Matched 108 Log #KH-882</span></td>
+                                <td class="p-3.5 text-right space-x-2">
+                                    <button onclick="approveBlackSpot(this, 'Provisional')" class="bg-amber-500 hover:bg-amber-600 text-white font-bold px-3 py-1.5 rounded-lg shadow-sm">Provisional</button>
+                                    <button onclick="approveBlackSpot(this, 'Permanent')" class="bg-danger-600 hover:bg-danger-700 text-white font-bold px-3 py-1.5 rounded-lg shadow-sm">Permanent Black Spot</button>
+                                </td>
+                            </tr>
+                            <tr class="hover:bg-gray-50">
+                                <td class="p-3.5 font-bold text-gray-900">SH-95 Aluli Road Curve</td>
+                                <td class="p-3.5"><span class="bg-amber-50 text-amber-700 px-2.5 py-1 rounded-lg font-semibold">Two-Wheeler, Wrong-side</span></td>
+                                <td class="p-3.5 text-gray-500">45 mins ago</td>
+                                <td class="p-3.5"><span class="text-amber-600 font-semibold">Pending FIR Verification</span></td>
+                                <td class="p-3.5 text-right space-x-2">
+                                    <button onclick="approveBlackSpot(this, 'Provisional')" class="bg-amber-500 hover:bg-amber-600 text-white font-bold px-3 py-1.5 rounded-lg shadow-sm">Provisional</button>
+                                    <button onclick="approveBlackSpot(this, 'Permanent')" class="bg-danger-600 hover:bg-danger-700 text-white font-bold px-3 py-1.5 rounded-lg shadow-sm">Permanent Black Spot</button>
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <!-- VIEW 4: RECEIVING HOSPITAL DASHBOARD -->
+        <div id="view-hospital" class="role-view hidden space-y-8">
+            <div class="bg-purple-900 text-white rounded-3xl p-6 sm:p-8 shadow-md flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+                <div>
+                    <span class="bg-purple-800 text-purple-200 text-xs font-bold px-3 py-1 rounded-full uppercase tracking-wider">Emergency Desk Login</span>
+                    <h1 class="text-2xl sm:text-3xl font-extrabold mt-2">Receiving Hospital Dashboard (Sadar Hospital Khagaria)</h1>
+                    <p class="text-purple-200 text-sm mt-1">Live capacity sync and pre-arrival patient triage review.</p>
+                </div>
+                <button onclick="switchRole('public')" class="bg-white/10 hover:bg-white/20 text-white font-bold px-4 py-2.5 rounded-xl text-sm transition-all border border-white/20">
+                    <i class="fa-solid fa-arrow-left mr-1"></i> Exit Hospital Portal
+                </button>
+            </div>
+
+            <!-- Live Availability Toggles -->
+            <div class="bg-white rounded-3xl p-6 sm:p-8 shadow-sm border border-gray-200 space-y-6">
+                <h2 class="text-xl font-bold text-gray-900 flex items-center gap-2">
+                    <i class="fa-solid fa-bed-pulse text-purple-600"></i> Real-Time Hospital Capability & Bed Toggles
+                </h2>
+                <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+                    <div class="bg-gray-50 p-4 rounded-2xl border border-gray-200 flex items-center justify-between">
+                        <div>
+                            <p class="font-bold text-gray-900 text-sm">Trauma Beds</p>
+                            <p class="text-xs text-health-600 font-semibold" id="status-trauma">8 Available</p>
+                        </div>
+                        <button onclick="toggleHospitalResource('trauma')" class="bg-health-600 text-white px-3 py-1.5 rounded-xl text-xs font-bold shadow-sm">Toggle</button>
+                    </div>
+                    <div class="bg-gray-50 p-4 rounded-2xl border border-gray-200 flex items-center justify-between">
+                        <div>
+                            <p class="font-bold text-gray-900 text-sm">ICU Ventilators</p>
+                            <p class="text-xs text-health-600 font-semibold" id="status-icu">3 Available</p>
+                        </div>
+                        <button onclick="toggleHospitalResource('icu')" class="bg-health-600 text-white px-3 py-1.5 rounded-xl text-xs font-bold shadow-sm">Toggle</button>
+                    </div>
+                    <div class="bg-gray-50 p-4 rounded-2xl border border-gray-200 flex items-center justify-between">
+                        <div>
+                            <p class="font-bold text-gray-900 text-sm">Medical Oxygen</p>
+                            <p class="text-xs text-health-600 font-semibold" id="status-oxygen">Normal Supply</p>
+                        </div>
+                        <button onclick="toggleHospitalResource('oxygen')" class="bg-health-600 text-white px-3 py-1.5 rounded-xl text-xs font-bold shadow-sm">Toggle</button>
+                    </div>
+                    <div class="bg-gray-50 p-4 rounded-2xl border border-gray-200 flex items-center justify-between">
+                        <div>
+                            <p class="font-bold text-gray-900 text-sm">Blood Bank (O- / A+)</p>
+                            <p class="text-xs text-health-600 font-semibold" id="status-blood">Adequate Stock</p>
+                        </div>
+                        <button onclick="toggleHospitalResource('blood')" class="bg-health-600 text-white px-3 py-1.5 rounded-xl text-xs font-bold shadow-sm">Toggle</button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Incoming Referrals & Two-Way Acceptance -->
+            <div class="bg-white rounded-3xl p-6 sm:p-8 shadow-sm border border-gray-200 space-y-6">
+                <h2 class="text-xl font-bold text-gray-900">Incoming Hub Referrals & Pre-Arrival Alerts</h2>
+                <div class="space-y-4" id="incoming-referrals-list">
+                    <div class="referral-card bg-blue-50/50 p-5 rounded-2xl border border-blue-200 flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+                        <div class="space-y-1">
+                            <div class="flex items-center gap-2">
+                                <span class="bg-danger-600 text-white text-xs font-bold px-2.5 py-0.5 rounded-md">Critical Trauma</span>
+                                <span class="text-xs text-gray-500 font-medium">ETA: 14 mins (108 Ambulance #KH-441)</span>
+                            </div>
+                            <h4 class="font-bold text-gray-900 text-base">Patient: Ramesh Kumar (Age 34) - Head Trauma / Fracture</h4>
+                            <p class="text-xs text-gray-600">Stabilization at Aluli Hub: Oxygen started, IV secured, bleeding controlled.</p>
+                        </div>
+                        <div class="flex gap-2 shrink-0">
+                            <button onclick="handleReferralResponse(this, 'Accepted')" class="bg-health-600 hover:bg-health-700 text-white font-bold px-4 py-2.5 rounded-xl text-xs shadow">
+                                ✅ Accept & Ready
+                            </button>
+                            <button onclick="handleReferralResponse(this, 'Diverted')" class="bg-danger-600 hover:bg-danger-700 text-white font-bold px-4 py-2.5 rounded-xl text-xs shadow">
+                                🚫 Divert (Full)
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- DISTRICT ANALYTICS & IMPACT DASHBOARD -->
+        <section class="mt-16 pt-12 border-t border-gray-200 space-y-8">
+            <div class="flex flex-col md:flex-row md:items-end justify-between gap-4">
+                <div>
+                    <span class="text-xs font-bold text-brand-600 uppercase tracking-wider">Evaluation Metrics</span>
+                    <h2 class="text-2xl font-bold text-gray-900 mt-1" data-i18n="analytics_title">District Analytics & Impact Dashboard</h2>
+                </div>
+                <p class="text-xs text-gray-500" data-i18n="analytics_sub">Tracking golden-hour response times, decongestion ratios, and fatality trends in Khagaria.</p>
+            </div>
+
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                <div class="bg-white p-6 rounded-3xl shadow-sm border border-gray-200">
+                    <div class="flex items-center justify-between mb-4">
+                        <h4 class="text-xs font-bold text-gray-500 uppercase" data-i18n="metric_1_title">Golden-Minute Response</h4>
+                        <i class="fa-solid fa-stopwatch text-brand-500 text-xl"></i>
+                    </div>
+                    <div class="text-3xl font-extrabold text-gray-900">11.4 <span class="text-lg text-gray-500 font-medium">mins</span></div>
+                    <p class="text-xs text-health-600 font-bold mt-2"><i class="fa-solid fa-arrow-trend-down"></i> Down 72% from previous 42 mins</p>
+                </div>
+                <div class="bg-white p-6 rounded-3xl shadow-sm border border-gray-200">
+                    <div class="flex items-center justify-between mb-4">
+                        <h4 class="text-xs font-bold text-gray-500 uppercase" data-i18n="metric_2_title">Hospital Decongestion Ratio</h4>
+                        <i class="fa-solid fa-hospital-user text-health-500 text-xl"></i>
+                    </div>
+                    <div class="text-3xl font-extrabold text-gray-900">71.8%</div>
+                    <p class="text-xs text-health-600 font-bold mt-2"><i class="fa-solid fa-arrow-trend-up"></i> Minor cases fully treated at village hubs</p>
+                </div>
+                <div class="bg-white p-6 rounded-3xl shadow-sm border border-gray-200">
+                    <div class="flex items-center justify-between mb-4">
+                        <h4 class="text-xs font-bold text-gray-500 uppercase" data-i18n="metric_3_title">Unserved Black-Spots</h4>
+                        <i class="fa-solid fa-fire text-danger-500 text-xl"></i>
+                    </div>
+                    <div class="text-3xl font-extrabold text-gray-900">2 <span class="text-sm font-medium text-gray-500">Stretches</span></div>
+                    <p class="text-xs text-danger-600 font-bold mt-2"><i class="fa-solid fa-circle-exclamation"></i> Priority siting for next hub cluster</p>
+                </div>
+            </div>
+        </section>
+
+    </main>
+
+    <!-- Footer -->
+    <footer class="bg-gray-900 text-gray-400 py-12 text-center mt-20 mb-16">
+        <div class="max-w-7xl mx-auto px-4">
+            <div class="flex justify-center items-center gap-3 mb-4">
+                <div class="bg-brand-600 text-white p-2 rounded-xl">
+                    <i class="fa-solid fa-house-medical text-lg"></i>
+                </div>
+                <span class="font-bold text-xl tracking-tight text-white">Gramin<span class="text-brand-500">Health</span></span>
+            </div>
+            <p class="text-xs text-gray-400 max-w-md mx-auto mb-6">Rural Community Health Hub & Accident Awareness Platform, Khagaria District, Bihar.</p>
+            <p class="text-xs text-gray-600">&copy; 2026 GraminHealth Platform. All rights reserved.</p>
+        </div>
+    </footer>
+
+    <!-- ==================== STICKY EMERGENCY FOOTER ==================== -->
+    <div class="fixed bottom-0 left-0 w-full bg-white/95 backdrop-blur-md border-t border-gray-200 shadow-[0_-6px_20px_rgba(0,0,0,0.08)] z-[100] px-3 py-3">
+        <div class="max-w-7xl mx-auto flex gap-3">
+            <button onclick="callNearestHub()" class="flex-1 bg-health-600 hover:bg-health-700 text-white font-bold py-3.5 px-3 rounded-2xl flex items-center justify-center gap-2.5 text-sm sm:text-base transition-all shadow-md active:scale-95">
+                <i class="fa-solid fa-house-medical text-lg"></i>
+                <span data-i18n="footer_btn_hub">Call Nearest Hub</span>
+            </button>
+            <button onclick="call108Ambulance()" class="flex-1 bg-danger-600 hover:bg-danger-700 text-white font-bold py-3.5 px-3 rounded-2xl flex items-center justify-center gap-2.5 text-sm sm:text-base transition-all shadow-md active:scale-95">
+                <i class="fa-solid fa-truck-medical text-xl animate-pulse"></i>
+                <span data-i18n="footer_btn_108">Call 108 (Auto-GPS)</span>
+            </button>
+        </div>
+    </div>
+
+    <!-- ==================== MODALS ==================== -->
+
+    <!-- PIN Access Modal -->
+    <div id="pin-modal" class="fixed inset-0 bg-black/60 backdrop-blur-sm z-[250] hidden flex items-center justify-center p-4">
+        <div class="bg-white rounded-3xl max-w-md w-full p-6 sm:p-8 space-y-6 shadow-2xl animate-in fade-in zoom-in duration-200">
+            <div class="text-center">
+                <div class="w-14 h-14 bg-brand-50 text-brand-600 rounded-2xl flex items-center justify-center mx-auto text-2xl mb-3 shadow-inner">
+                    <i class="fa-solid fa-lock" id="modal-role-icon"></i>
+                </div>
+                <h3 class="text-xl font-bold text-gray-900" id="modal-title">Enter Portal PIN</h3>
+                <p class="text-xs text-gray-500 mt-1" id="modal-subtitle">Authorized staff login required.</p>
+            </div>
+            <div class="space-y-4">
+                <input type="password" id="pin-input" placeholder="Enter 4-digit PIN (e.g., 1234)" maxlength="4" class="w-full text-center tracking-widest text-2xl font-mono py-3 rounded-2xl border border-gray-300 bg-gray-50 focus:outline-none focus:ring-2 focus:ring-brand-500">
+                <div class="flex gap-3">
+                    <button onclick="closePinModal()" class="flex-1 bg-gray-100 hover:bg-gray-200 text-gray-700 font-bold py-3 rounded-xl text-sm">Cancel</button>
+                    <button onclick="verifyPin()" class="flex-1 bg-brand-600 hover:bg-brand-700 text-white font-bold py-3 rounded-xl text-sm shadow">Verify PIN</button>
+                </div>
+            </div>
+            <div class="bg-gray-50 p-3 rounded-xl text-center text-[11px] text-gray-500">
+                Hint: Health Hub PIN: <strong class="text-gray-800">1234</strong> | Official PIN: <strong class="text-gray-800">5678</strong> | Hospital PIN: <strong class="text-gray-800">9012</strong>
+            </div>
+        </div>
+    </div>
+
+    <!-- SMS Fallback Gateway Modal -->
+    <div id="sms-modal" class="fixed inset-0 bg-black/60 backdrop-blur-sm z-[250] hidden flex items-center justify-center p-4">
+        <div class="bg-white rounded-3xl max-w-md w-full p-6 sm:p-8 space-y-6 shadow-2xl">
+            <div class="text-center">
+                <div class="w-14 h-14 bg-emerald-50 text-emerald-600 rounded-2xl flex items-center justify-center mx-auto text-2xl mb-3 shadow-inner">
+                    <i class="fa-solid fa-comment-sms"></i>
+                </div>
+                <h3 class="text-xl font-bold text-gray-900">Zero-Signal SMS Fallback Gateway</h3>
+                <p class="text-xs text-gray-500 mt-1">When mobile internet drops, crash data is compressed into an automated SMS.</p>
+            </div>
+            <div class="bg-gray-50 p-4 rounded-2xl border border-gray-200 font-mono text-xs text-gray-700 space-y-1">
+                <p class="text-gray-400">// Automated SMS Payload:</p>
+                <p class="text-brand-700 font-bold">KHAGARIA_CRASH|GPS:25.5947,86.4746|TAG:Overspeed|TIME:12:45</p>
+            </div>
+            <div class="flex gap-3">
+                <button onclick="closeSmsModal()" class="flex-1 bg-gray-100 text-gray-700 font-bold py-3 rounded-xl text-sm">Cancel</button>
+                <button onclick="sendCompressedSMS()" class="flex-1 bg-emerald-600 hover:bg-emerald-700 text-white font-bold py-3 rounded-xl text-sm shadow">Send Emergency SMS</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Leaflet JS -->
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+
+    <!-- Application Script -->
+    <script>
+        // --- State Management ---
+        let currentRole = 'public';
+        let currentLang = 'en';
+        let pendingRoleTarget = '';
+        let map;
+        let selectedTags = [];
+
+        // Khagaria coordinates center
+        const KHAGARIA_LAT = 25.5947;
+        const KHAGARIA_LNG = 86.4746;
+
+        // Multilingual Dictionary
+        const i18n = {
+            en: {
+                gs_title: "Good Samaritan Legal Protection Assured",
+                gs_desc: "You will NOT be detained, questioned, or asked for identity/money at hospitals or police stations when saving an accident victim.",
+                sms_fallback_btn: "Offline SMS Gateway",
+                badge_emergency: "Emergency Action",
+                hero_heading: "1-Tap Anonymous Crash & Hazard Reporting",
+                hero_sub: "No names or phone numbers required. Instantly alert nearby hubs, 108 ambulances, and warn oncoming traffic.",
+                btn_autolocate: "Use My Current GPS Location",
+                btn_voicenote: "10s Voice Note",
+                lbl_hazards: "Select Hazard Factors:",
+                btn_submit_report: "Broadcast Anonymous Crash Pin",
+                illness_req_title: "Have an Unresolved Illness or Emergency Need?",
+                illness_req_desc: "Request a priority token for the nearest Village Health Hub or hospital referral.",
+                btn_req_token: "Get Hub Token",
+                driver_alert_title: "Driver Alert Mode",
+                status_active: "Active",
+                driver_alert_desc: "Background simulation speaks audio warnings in local language when within 500m of verified Black Spots.",
+                btn_test_audio: "Test Hindi Audio Warning",
+                map_section_title: "Khagaria District Live Accident & Hub Map",
+                map_section_sub: "Real-time vector sync with district boundary, regional corridors, and 108 dispatch.",
+                analytics_title: "District Analytics & Impact Dashboard",
+                analytics_sub: "Tracking golden-hour response times, decongestion ratios, and fatality trends in Khagaria.",
+                metric_1_title: "Golden-Minute Response",
+                metric_2_title: "Hospital Decongestion Ratio",
+                metric_3_title: "Unserved Black-Spots",
+                footer_btn_hub: "Call Nearest Hub",
+                footer_btn_108: "Call 108 (Auto-GPS)"
+            },
+            hi: {
+                gs_title: "गुड समरिटन कानूनी सुरक्षा आश्वासन",
+                gs_desc: "दुर्घटना पीड़ित की मदद करने पर आपको अस्पताल या पुलिस थाने में रोका नहीं जाएगा, पूछताछ नहीं होगी और पहचान या पैसे की मांग नहीं की जाएगी।",
+                sms_fallback_btn: "ऑफ़लाइन एसएमएस गेटवे",
+                badge_emergency: "आपातकालीन कार्रवाई",
+                hero_heading: "1-टैप अनाम दुर्घटना और खतरा रिपोर्टिंग",
+                hero_sub: "नाम या फोन नंबर की आवश्यकता नहीं। तुरंत नजदीकी हब, 108 एम्बुलेंस को सचेत करें और आने वाले ट्रैफ़िक को चेतावनी दें।",
+                btn_autolocate: "मेरा वर्तमान जीपीएस स्थान उपयोग करें",
+                btn_voicenote: "10s वॉयस नोट",
+                lbl_hazards: "खतरे के कारक चुनें:",
+                btn_submit_report: "अनाम दुर्घटना पिन प्रसारित करें",
+                illness_req_title: "कोई पुरानी बीमारी या आपातकालीन आवश्यकता है?",
+                illness_req_desc: "नजदीकी ग्राम स्वास्थ्य केंद्र या अस्पताल रेफरल के लिए प्राथमिकता टोकन का अनुरोध करें।",
+                btn_req_token: "हब टोकन प्राप्त करें",
+                driver_alert_title: "ड्राइवर अलर्ट मोड",
+                status_active: "सक्रिय",
+                driver_alert_desc: "सत्यापित ब्लैक स्पॉट के 500 मीटर के दायरे में आने पर पृष्ठभूमि सिमुलेशन स्थानीय भाषा में ऑडियो चेतावनी देता है।",
+                btn_test_audio: "हिंदी ऑडियो चेतावनी परीक्षण करें",
+                map_section_title: "खगड़िया जिला लाइव दुर्घटना और हब मानचित्र",
+                map_section_sub: "जिला सीमा, क्षेत्रीय गलियारों और 108 प्रेषण के साथ रीयल-टाइम वेक्टर सिंक।",
+                analytics_title: "जिला विश्लेषण और प्रभाव डैशबोर्ड",
+                analytics_sub: "खगड़िया में गोल्डन-हावर प्रतिक्रिया समय, डीकंजेशन अनुपात और मृत्यु दर के रुझान को ट्रैक करना।",
+                metric_1_title: "गोल्डन-मिनट प्रतिक्रिया",
+                metric_2_title: "अस्पताल डीकंजेशन अनुपात",
+                metric_3_title: "असेवित ब्लैक-स्पॉट",
+                footer_btn_hub: "नजदीकी हब को कॉल करें",
+                footer_btn_108: "108 कॉल करें (ऑटो-जीपीएस)"
+            }
+        };
+
+        // Initialize App & Map on Load
+        window.onload = function() {
+            initMap();
+        };
+
+        function initMap() {
+            // Initialize Leaflet Map centered on Khagaria
+            map = L.map('map', {
+                zoomControl: true,
+                attributionControl: false
+            }).setView([25.5947, 86.4746], 11);
+
+            // Minimalist CartoDB Positron Basemap matching reference pastel style
+            L.tileLayer('https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png', {
+                maxZoom: 18,
+                subdomains: 'abcd'
+            }).addTo(map);
+
+            // 1. Khagaria District Boundary Polygon (Dashed Green Outline & Soft Green Fill)
+            const districtCoords = [
+                [25.6800, 86.3000],
+                [25.6900, 86.6800],
+                [25.6400, 86.8200],
+                [25.5100, 86.8000],
+                [25.4800, 86.4200],
+                [25.5200, 86.3000]
+            ];
+            L.polygon(districtCoords, {
+                color: '#15803d',
+                weight: 2,
+                dashArray: '6, 6',
+                fillColor: '#dcfce7',
+                fillOpacity: 0.25
+            }).addTo(map);
+
+            // 2. Major Highways (NH-31 Orange/Yellow Polylines)
+            const nh31Coords = [
+                [25.5400, 86.0500],
+                [25.5700, 86.3000],
+                [25.5947, 86.4746],
+                [25.6200, 86.6500],
+                [25.6400, 86.9500]
+            ];
+            L.polyline(nh31Coords, {
+                color: '#f97316',
+                weight: 6,
+                opacity: 0.9,
+                lineCap: 'round',
+                lineJoin: 'round'
+            }).addTo(map).bindPopup("<b>NH-31 Primary Corridor</b><br>High-density freight & transit route");
+
+            // 3. Major Rivers (Blue Polylines matching reference)
+            // Ganga River (South)
+            L.polyline([[25.4200, 86.0500], [25.4600, 86.4000], [25.4300, 86.9000]], {
+                color: '#38bdf8',
+                weight: 7,
+                opacity: 0.65
+            }).addTo(map);
+
+            // Burhi Gandak River (North-West to South-Central)
+            L.polyline([[25.7500, 86.3500], [25.6600, 86.4100], [25.5947, 86.4746]], {
+                color: '#38bdf8',
+                weight: 4,
+                opacity: 0.65
+            }).addTo(map);
+
+            // Kosi River (East)
+            L.polyline([[25.7800, 86.7200], [25.6800, 86.6500], [25.5200, 86.7000]], {
+                color: '#38bdf8',
+                weight: 5,
+                opacity: 0.65
+            }).addTo(map);
+
+            // 4. River & Regional Hub Labels (DivIcons matching reference)
+            const labels = [
+                { lat: 25.4500, lng: 86.2500, html: '<span class="river-label-badge">Ganga</span>' },
+                { lat: 25.7000, lng: 86.3300, html: '<span class="river-label-badge">Burhi Gandak</span>' },
+                { lat: 25.7200, lng: 86.6900, html: '<span class="river-label-badge">Kosi</span>' },
+                { lat: 25.4800, lng: 86.1200, html: '<div class="map-label-badge bg-blue-700">H Begusarai</div>' },
+                { lat: 25.5947, lng: 86.4900, html: '<div class="map-label-badge bg-brand-700">H Khagaria</div>' },
+                { lat: 25.3200, lng: 86.9200, html: '<div class="map-label-badge bg-blue-800">H Bhagalpur</div>' }
+            ];
+            labels.forEach(lbl => {
+                L.marker([lbl.lat, lbl.lng], {
+                    icon: L.divIcon({
+                        html: lbl.html,
+                        className: 'custom-label-icon',
+                        iconSize: [80, 20],
+                        iconAnchor: [40, 10]
+                    }),
+                    interactive: false
+                }).addTo(map);
+            });
+
+            // 5. Custom Map Markers & Legend Alignment
+            const mapLocations = [
+                // Village Health Hubs (Green circles with white '+')
+                { lat: 25.5947, lng: 86.4746, type: 'hub', title: 'Khagaria Village Health Hub (Aluli)' },
+                { lat: 25.5500, lng: 86.5200, type: 'hub', title: 'Mansi Rural Health Center' },
+                { lat: 25.5300, lng: 86.5500, type: 'hub', title: 'Beldaur Health Post' },
+                { lat: 25.6200, lng: 86.5800, type: 'hub', title: 'Chautham Health Sub-Center' },
+
+                // Receiving Hospitals (Blue squares with 'H')
+                { lat: 25.6050, lng: 86.4850, type: 'hospital', title: 'Sadar Hospital Khagaria (Tertiary)' },
+                { lat: 25.5000, lng: 86.1500, type: 'hospital', title: 'Begusarai District Hospital' },
+                { lat: 25.3500, lng: 86.9700, type: 'hospital', title: 'Bhagalpur Medical College (JLNMCH)' },
+
+                // Crash & Black Spots matching Legend: Unverified (Yellow), Provisional (Orange), Black Spot (Red/Black)
+                { lat: 25.6100, lng: 86.5300, type: 'yellow', title: 'Unverified Crash Pin: Gogri Curve' },
+                { lat: 25.5800, lng: 86.4100, type: 'orange', title: 'Provisional Black Spot: SH-95 Curve' },
+                { lat: 25.5650, lng: 86.3800, type: 'blackspot', title: 'Verified Black Spot: NH-31 Junction' }
+            ];
+
+            mapLocations.forEach(loc => {
+                let markerHtml = '';
+                let anchor = [10, 10];
+
+                if (loc.type === 'hub') {
+                    markerHtml = `<div style="background-color: #059669; width: 22px; height: 22px; border-radius: 50%; border: 2px solid white; box-shadow: 0 2px 5px rgba(0,0,0,0.3); display: flex; align-items: center; justify-content: center; color: white; font-size: 12px; font-weight: bold;">+</div>`;
+                } else if (loc.type === 'hospital') {
+                    markerHtml = `<div style="background-color: #2563eb; width: 24px; height: 24px; border-radius: 6px; border: 2px solid white; box-shadow: 0 2px 5px rgba(0,0,0,0.3); display: flex; align-items: center; justify-content: center; color: white; font-size: 12px; font-weight: bold;">H</div>`;
+                } else if (loc.type === 'yellow') {
+                    markerHtml = `<div style="background-color: #facc15; width: 20px; height: 20px; border-radius: 50%; border: 2px solid #ca8a04; box-shadow: 0 2px 5px rgba(0,0,0,0.3);"></div>`;
+                } else if (loc.type === 'orange') {
+                    markerHtml = `<div style="background-color: #f97316; width: 20px; height: 20px; border-radius: 50%; border: 2px solid #c2410c; box-shadow: 0 2px 5px rgba(0,0,0,0.3);"></div>`;
+                } else if (loc.type === 'blackspot') {
+                    markerHtml = `<div style="background-color: #dc2626; width: 22px; height: 22px; border-radius: 50%; border: 2px solid #0f172a; box-shadow: 0 2px 6px rgba(0,0,0,0.4); animation: pulse 2s infinite;"></div>`;
+                }
+
+                const customIcon = L.divIcon({
+                    html: markerHtml,
+                    className: 'custom-map-icon',
+                    iconSize: [22, 22],
+                    iconAnchor: anchor
+                });
+
+                L.marker([loc.lat, loc.lng], { icon: customIcon }).addTo(map)
+                  .bindPopup(`<div style="font-family: Inter, sans-serif; padding: 4px;"><b>${loc.title}</b><br><span style="font-size: 11px; color: #64748b;">Status: Active / Monitored</span></div>`);
+            });
+        }
+
+        function resetMapView() {
+            if(map) {
+                map.setView([KHAGARIA_LAT, KHAGARIA_LNG], 11);
+                showToast("Map centered on Khagaria District", "info");
+            }
+        }
+
+        // --- Role Switching & PIN Verification ---
+        function switchRole(role) {
+            currentRole = role;
+            document.querySelectorAll('.role-view').forEach(el => el.classList.add('hidden'));
+            document.getElementById(`view-${role}`).classList.remove('hidden');
+
+            // Update navbar active states
+            ['public', 'hub', 'official', 'hospital'].forEach(r => {
+                const btn = document.getElementById(`nav-btn-${r}`);
+                if(btn) {
+                    if(r === role) {
+                        btn.className = "px-4 py-2 rounded-lg text-sm font-semibold transition-all bg-white text-brand-600 shadow-sm";
+                    } else {
+                        btn.className = "px-4 py-2 rounded-lg text-sm font-semibold transition-all text-gray-600 hover:text-gray-900";
+                    }
+                }
+            });
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+        }
+
+        function requestRoleAccess(role) {
+            pendingRoleTarget = role;
+            const titles = { hub: 'Village Health Hub Portal', official: 'Official Verifier Portal', hospital: 'Receiving Hospital Dashboard' };
+            document.getElementById('modal-title').innerText = `Enter PIN for ${titles[role]}`;
+            document.getElementById('pin-input').value = '';
+            document.getElementById('pin-modal').classList.remove('hidden');
+        }
+
+        function closePinModal() {
+            document.getElementById('pin-modal').classList.add('hidden');
+        }
+
+        function verifyPin() {
+            const pin = document.getElementById('pin-input').value;
+            const validPins = { hub: '1234', official: '5678', hospital: '9012' };
+
+            if(pin === validPins[pendingRoleTarget]) {
+                closePinModal();
+                switchRole(pendingRoleTarget);
+                showToast("Access Granted Successfully", "success");
+            } else {
+                showToast("Incorrect PIN. Try 1234, 5678, or 9012", "error");
+            }
+        }
+
+        // --- Language Toggle ---
+        function toggleLanguage() {
+            currentLang = currentLang === 'en' ? 'hi' : 'en';
+            document.getElementById('lang-text').innerText = currentLang === 'en' ? 'हिंदी' : 'English';
+            
+            const dict = i18n[currentLang];
+            for (const key in dict) {
+                const el = document.querySelector(`[data-i18n="${key}"]`);
+                if (el) el.innerText = dict[key];
+            }
+            showToast(currentLang === 'hi' ? 'भाषा बदलकर हिंदी कर दी गई है' : 'Language switched to English', 'info');
+        }
+
+        // --- Public Feature Interactions ---
+        function autoLocateGPS() {
+            showToast("GPS Lock acquired: 25.5947° N, 86.4746° E (Khagaria)", "success");
+            if (map) {
+                map.setView([25.5947, 86.4746], 14);
+            }
+        }
+
+        function triggerVoiceRecord() {
+            const btn = document.getElementById('voice-btn');
+            btn.innerHTML = '<i class="fa-solid fa-microphone-lines text-red-600 text-lg animate-pulse"></i> Recording 10s...';
+            setTimeout(() => {
+                btn.innerHTML = '<i class="fa-solid fa-check text-health-600 text-lg"></i> Voice Note Attached';
+                showToast("10-second voice memo attached successfully", "success");
+            }, 3000);
+        }
+
+        function toggleTag(btn) {
+            btn.classList.toggle('bg-brand-600');
+            btn.classList.toggle('text-white');
+            btn.classList.toggle('border-brand-600');
+            const tag = btn.getAttribute('data-tag');
+            if (selectedTags.includes(tag)) {
+                selectedTags = selectedTags.filter(t => t !== tag);
+            } else {
+                selectedTags.push(tag);
+            }
+        }
+
+        function submitCrashReport() {
+            showToast("Crash Pin broadcasted anonymously to nearby hubs & 108 dispatch!", "success");
+            selectedTags = [];
+            document.querySelectorAll('#hazard-tags button').forEach(b => {
+                b.classList.remove('bg-brand-600', 'text-white', 'border-brand-600');
+            });
+        }
+
+        function submitIllnessRequest() {
+            const name = document.getElementById('illness-name').value || 'Anonymous Villager';
+            const type = document.getElementById('illness-type').value;
+            showToast(`Priority token generated for ${type}! Hub staff notified.`, "success");
+            document.getElementById('illness-name').value = '';
+        }
+
+        function testAudioWarning() {
+            showToast("🔊 [Hindi Audio Warning]: 'सावधान! 500 मीटर आगे ब्लैक स्पॉट है, कृपया गति धीमी करें।'", "info");
+        }
+
+        // --- Hub Portal Interactions ---
+        function completeHubTriage(action) {
+            const name = document.getElementById('triage-patient-name').value || 'Emergency Patient';
+            const severity = document.getElementById('triage-severity').value;
+            
+            if (action === 'Treat Locally') {
+                showToast(`Patient ${name} stabilized and treated at Hub. Hospital decongested!`, "success");
+            } else {
+                showToast(`Referral ticket generated for ${name} (${severity})! Pre-alert sent to Sadar Hospital.`, "success");
+                document.getElementById('referral-ticket-display').innerHTML = `
+                    <div class="bg-white p-3 rounded-xl border border-purple-200 text-left space-y-1 shadow-sm">
+                        <p class="font-bold text-purple-900">Ticket #KH-REF-8891</p>
+                        <p><strong>Patient:</strong> ${name}</p>
+                        <p><strong>Condition:</strong> ${severity}</p>
+                        <p><strong>Stabilization:</strong> Vitals recorded, Oxygen & IV secured.</p>
+                        <p class="text-health-600 font-bold mt-1">Status: Pre-Informed Arrival Sent to Hospital (QR Active)</p>
+                    </div>
+                `;
+            }
+            document.getElementById('triage-patient-name').value = '';
+        }
+
+        function logEverydayIllness() {
+            const desc = document.getElementById('illness-log-desc').value;
+            if(!desc) {
+                showToast("Please enter condition description", "error");
+                return;
+            }
+            const list = document.getElementById('illness-log-list');
+            const item = document.createElement('div');
+            item.className = "bg-gray-50 p-2.5 rounded-xl flex justify-between items-center border border-gray-200 animate-in fade-in duration-200";
+            item.innerHTML = `<span>${desc}</span><span class="font-bold text-health-600">1 Case</span>`;
+            list.prepend(item);
+            document.getElementById('illness-log-desc').value = '';
+            showToast("Everyday illness logged successfully", "success");
+        }
+
+        // --- Official Verifier Portal Interactions ---
+        function approveBlackSpot(btn, tier) {
+            const row = btn.closest('tr');
+            row.style.opacity = '0.5';
+            showToast(`Pin successfully promoted to ${tier} Black Spot! Map updated.`, "success");
+            setTimeout(() => row.remove(), 1000);
+        }
+
+        // --- Hospital Portal Interactions ---
+        function toggleHospitalResource(res) {
+            showToast(`Hospital ${res.toUpperCase()} capacity status toggled successfully.`, "info");
+        }
+
+        function handleReferralResponse(btn, action) {
+            const card = btn.closest('.referral-card');
+            if (!card) return;
+            if (action === 'Accepted') {
+                card.className = "referral-card bg-emerald-50 p-5 rounded-2xl border border-emerald-200 flex flex-col md:flex-row justify-between items-start md:items-center gap-4";
+                const infoDiv = card.querySelector('div.space-y-1');
+                if (infoDiv) infoDiv.innerHTML += '<p class="text-emerald-700 font-bold mt-1">✔ Hospital Response: Accepted & Trauma Team Ready</p>';
+                showToast("Patient acceptance confirmed to 108 ambulance and Hub.", "success");
+            } else {
+                card.className = "referral-card bg-red-50 p-5 rounded-2xl border border-red-200 flex flex-col md:flex-row justify-between items-start md:items-center gap-4";
+                const infoDiv = card.querySelector('div.space-y-1');
+                if (infoDiv) infoDiv.innerHTML += '<p class="text-red-700 font-bold mt-1">🚫 Hospital Response: Diverted to Tertiary Care (Ward Full)</p>';
+                showToast("Patient successfully diverted to avoid overloaded ward.", "info");
+            }
+            const btnGroup = card.querySelector('.shrink-0');
+            if (btnGroup) btnGroup.remove();
+        }
+
+        // --- Emergency Footer Actions ---
+        function callNearestHub() {
+            showToast("Connecting to Aluli Village Health Hub on Duty Nurse: +91 94310-XXXXX", "success");
+        }
+
+        function call108Ambulance() {
+            showToast("🚨 EMERGENCY 108: Auto-transmitting exact GPS coordinates (25.5947, 86.4746). Dispatching nearest ambulance.", "success");
+        }
+
+        // --- SMS Fallback Modal ---
+        function showSmsModal() {
+            document.getElementById('sms-modal').classList.remove('hidden');
+        }
+        function closeSmsModal() {
+            document.getElementById('sms-modal').classList.add('hidden');
+        }
+        function sendCompressedSMS() {
+            closeSmsModal();
+            showToast("Compressed SMS successfully sent to central Khagaria emergency gateway via cellular fallback!", "success");
+        }
+
+        // --- Toast Notification Helper ---
+        function showToast(message, type = 'info') {
+            const container = document.getElementById('toast-container');
+            const toast = document.createElement('div');
+            let bgClass = 'bg-gray-900 text-white';
+            if (type === 'success') bgClass = 'bg-emerald-600 text-white';
+            if (type === 'error') bgClass = 'bg-danger-600 text-white';
+            if (type === 'info') bgClass = 'bg-brand-600 text-white';
+
+            toast.className = `${bgClass} px-4 py-3 rounded-2xl shadow-xl text-xs sm:text-sm font-medium flex items-center gap-3 pointer-events-auto animate-in slide-in-from-top-5 duration-200`;
+            toast.innerHTML = `<i class="fa-solid fa-circle-info shrink-0"></i> <span>${message}</span>`;
+            container.appendChild(toast);
+
+            setTimeout(() => {
+                toast.style.opacity = '0';
+                toast.style.transition = 'opacity 0.3s ease';
+                setTimeout(() => toast.remove(), 300);
+            }, 3500);
+        }
+    </script>
+</body>
+</html>
