@@ -1,0 +1,201 @@
+<!DOCTYPE html>
+<html lang="en"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Khagaria Health Hub</title>
+<style>
+:root{--bg:#f4f7fb;--card:#fff;--tx:#14202e;--mu:#6a7889;--bd:#e3e9f1;--ac:#0e9f6e;--acd:#0b7f58;--yl:#f5b301;--or:#f97316;--rd:#e5383b;--bl:#2563eb;--sh:0 4px 18px rgba(20,32,46,.09);color-scheme:light;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+html{scroll-padding-top:env(safe-area-inset-top,0px)}*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--tx);font:14px/1.45 "Inter",system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;height:100vh;overflow:hidden}
+.app{display:flex;flex-direction:column;height:100%}
+header{display:flex;align-items:center;gap:12px;padding:10px 16px;background:var(--card);border-bottom:1px solid var(--bd);z-index:6}
+.logo{display:flex;gap:10px;align-items:center;font-weight:700;font-size:15px;white-space:nowrap}.logo i{width:32px;height:32px;border-radius:10px;background:linear-gradient(135deg,#34d399,#0e9f6e);display:grid;place-items:center;color:#fff;font-style:normal;font-size:18px}
+.logo small{display:block;font-weight:500;color:var(--mu);font-size:11px}
+#q{flex:1;max-width:380px;margin-left:auto;padding:9px 12px 9px 34px;border:1px solid var(--bd);border-radius:10px;background:#f7f9fc url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' fill='none' stroke='%236a7889' stroke-width='2'%3E%3Ccircle cx='7' cy='7' r='5'/%3E%3Cpath d='M11 11l4 4'/%3E%3C/svg%3E") 10px center no-repeat;font-size:14px;color:var(--tx)}
+.body{flex:1;display:flex;min-height:0}
+aside{width:390px;display:flex;flex-direction:column;background:var(--card);border-right:1px solid var(--bd);z-index:5;min-height:0}
+.tabs{display:flex;padding:8px;gap:4px;border-bottom:1px solid var(--bd)}
+.tabs button{flex:1;border:0;background:none;padding:8px 2px;border-radius:10px;font-size:11px;color:var(--mu);cursor:pointer;font-weight:600}
+.tabs button span{display:block;font-size:17px}.tabs button.on{background:#e7f8f1;color:var(--acd)}
+.scroll{flex:1;overflow:auto;padding:14px 14px 90px}
+.panel{display:none}.panel.on{display:block}
+h2{font-size:15px;margin:0 0 4px}h3{font-size:12px;margin:14px 0 6px;color:var(--mu);text-transform:uppercase;letter-spacing:.05em}
+.sub{color:var(--mu);font-size:12px;margin-bottom:8px}
+.box{border:1px solid var(--bd);border-radius:14px;padding:12px;margin:10px 0;background:#fff}
+.note{background:#ecfdf5;color:#065f46;border-radius:10px;padding:9px 11px;font-size:12px}
+.tags{display:flex;flex-wrap:wrap;gap:6px}.tag{border:1px solid var(--bd);background:#f7f9fc;padding:7px 11px;border-radius:20px;font-size:12px;cursor:pointer;color:var(--tx)}.tag.on{background:var(--ac);color:#fff;border-color:var(--ac)}
+.btn{border:0;background:var(--ac);color:#fff;padding:10px 14px;border-radius:10px;font-size:13px;font-weight:600;cursor:pointer}.btn:hover{background:var(--acd)}
+.btn.r{background:var(--rd)}.btn.o{background:var(--or)}.btn.b{background:var(--bl)}.btn.l{background:#eef2f7;color:var(--tx)}.btn.s{padding:6px 10px;font-size:12px;border-radius:8px}.btn.w{width:100%}
+input,select{width:100%;padding:9px 10px;border:1px solid var(--bd);border-radius:10px;background:#f7f9fc;color:var(--tx);font-size:13px}
+label{font-size:11px;color:var(--mu);display:block;margin:8px 0 3px;font-weight:600}
+.row{display:flex;gap:8px;align-items:center}.row>*{flex:1}
+.bd{font-size:11px;padding:3px 9px;border-radius:20px;color:#fff;font-weight:600;display:inline-block}
+.it{padding:10px 0;border-top:1px solid var(--bd)}.it:first-child{border-top:0}
+.mu{color:var(--mu);font-size:12px}
+.stat{display:grid;grid-template-columns:1fr 1fr;gap:8px}.stat div{background:#f4f7fb;border-radius:12px;padding:12px;font-size:12px;color:var(--mu)}.stat b{display:block;font-size:24px;color:var(--tx)}
+.tk{display:flex;gap:10px;align-items:center}.alert{background:#fee2e2;color:#991b1b;border-radius:10px;padding:10px;font-weight:700;margin-top:8px}
+#map{position:relative;flex:1;overflow:hidden;background:#eef3ea;touch-action:none;cursor:grab}#map:active{cursor:grabbing}
+#map svg{position:absolute;inset:0;width:100%;height:100%}
+#mk{position:absolute;inset:0;pointer-events:none}#mk>*{position:absolute;pointer-events:auto;cursor:pointer}
+.pin{width:26px;height:26px;margin:-26px 0 0 -13px;border-radius:50% 50% 50% 0;transform:rotate(-45deg);border:2px solid #fff;box-shadow:0 2px 6px rgba(0,0,0,.3)}
+.pin.cur{background:var(--tx);animation:b .8s infinite alternate}@keyframes b{to{margin-top:-32px}}
+.hub{width:30px;height:30px;margin:-15px 0 0 -15px;border-radius:50%;background:#fff;border:3px solid var(--ac);color:var(--ac);display:grid;place-items:center;font-weight:900;font-size:18px;box-shadow:0 2px 6px rgba(0,0,0,.25)}
+.hos{width:28px;height:28px;margin:-14px 0 0 -14px;border-radius:8px;background:var(--bl);color:#fff;display:grid;place-items:center;font-weight:800;font-size:14px;border:2px solid #fff;box-shadow:0 2px 6px rgba(0,0,0,.25)}
+.zone{border-radius:50%;background:rgba(229,56,59,.18);border:2px dashed var(--rd);pointer-events:none!important}
+.lbl{pointer-events:none!important;font-size:12px;font-weight:600;color:#33414f;text-shadow:0 0 3px #fff,0 0 3px #fff,0 0 3px #fff;white-space:nowrap}
+.car{width:16px;height:16px;margin:-8px 0 0 -8px;border-radius:50%;background:var(--bl);border:3px solid #fff;box-shadow:0 0 0 6px rgba(37,99,235,.25);pointer-events:none!important}
+.ctl{position:absolute;right:14px;bottom:90px;display:flex;flex-direction:column;gap:8px;z-index:3}
+.ctl button{width:42px;height:42px;border:0;background:#fff;border-radius:12px;box-shadow:var(--sh);font-size:20px;cursor:pointer;color:var(--tx)}
+.leg{position:absolute;left:14px;bottom:90px;background:#fffffff2;border-radius:12px;padding:8px 12px;box-shadow:var(--sh);font-size:11px;color:var(--mu);display:flex;flex-wrap:wrap;gap:4px 12px;max-width:310px;z-index:3}
+.leg i{display:inline-block;width:9px;height:9px;border-radius:50%;margin-right:4px}
+#info{position:absolute;left:14px;top:14px;width:290px;background:#fff;border-radius:14px;padding:12px;box-shadow:var(--sh);display:none;z-index:4}
+.hint{position:absolute;top:14px;right:14px;background:#fffffff2;border-radius:20px;padding:6px 12px;font-size:12px;box-shadow:var(--sh);z-index:3}
+footer{position:fixed;left:0;right:0;bottom:0;display:flex;gap:10px;padding:10px 14px calc(10px + env(safe-area-inset-bottom,0px));background:#ffffffee;backdrop-filter:blur(8px);border-top:1px solid var(--bd);z-index:9}
+footer button{flex:1;padding:13px;font-size:14px;font-weight:700;border:0;border-radius:12px;color:#fff;cursor:pointer}
+#toast{position:fixed;left:50%;transform:translateX(-50%);bottom:82px;background:var(--tx);color:#fff;padding:10px 16px;border-radius:12px;display:none;z-index:10;font-size:13px;max-width:92vw}
+@media(max-width:820px){.body{flex-direction:column-reverse}aside{width:100%;height:46%;border-right:0;border-top:1px solid var(--bd)}#map{flex:none;height:54%}.logo small{display:none}.leg{display:none}#info{width:230px}.ctl{bottom:12px}}
+</style></head><body>
+<div class="app">
+<header><div class="logo"><i>✚</i><div>Khagaria Health Hub<small>Accident awareness and referral</small></div></div><input id="q" list="places" placeholder="Search Khagaria, Beldaur, hospitals..."><datalist id="places"></datalist></header>
+<div class="body">
+<aside><div class="tabs" id="tabs"></div><div class="scroll">
+
+<div class="panel on" id="p0"><h2>Report a crash</h2><div class="sub">Zoom in, then tap the exact spot on the map.</div>
+<div class="note">🛡 Good Samaritan protection: you will not face legal trouble for helping or reporting. No name or phone needed.</div>
+<div class="box"><div id="pinLoc" class="mu">No spot chosen yet.</div><div class="row" style="margin-top:8px"><button class="btn l s" id="gps">📍 Use my location</button></div>
+<h3>What happened?</h3><div class="tags" id="tags"></div><div class="row" style="margin-top:10px"><button class="btn l" id="voice">🎤 Voice note</button><button class="btn r" id="submitPin">Report crash</button></div></div>
+<div class="box"><h2>Get directions</h2><div class="sub">From your chosen spot to the nearest facility.</div><div class="row"><button class="btn b s" onclick="routeNearest('hub')">Nearest hub</button><button class="btn b s" onclick="routeNearest('hos')">Nearest hospital</button></div><div id="routeOut" class="mu" style="margin-top:8px"></div></div>
+<div class="box"><h2>Driver alert mode</h2><div class="sub">Drag to drive along NH-31.</div><input type="range" id="drive" min="0" max="100" value="0"><div id="driveOut" class="mu" style="margin-top:6px">Clear road ahead.</div></div>
+<div class="box"><h2>Request a referral</h2><div class="sub">Illness not solved by local treatment.</div><label>Condition</label><select id="vNeed"></select><label>Your village hub</label><select id="vHub"></select><div style="margin-top:10px"><button class="btn b w" id="vSend">Request referral</button></div><div id="vStatus"></div></div></div>
+
+<div class="panel" id="p1"><h2>Hub triage</h2><div class="sub">Arrive, check vitals, stabilize, then treat or refer.</div>
+<div class="row"><div><label>Hub</label><select id="hHub"></select></div><div><label>Patient</label><input id="hName" value="Ramesh, 34"></div></div>
+<div class="row"><div><label>Pulse</label><input id="hHR" value="112"></div><div><label>BP</label><input id="hBP" value="100/60"></div><div><label>SpO2</label><input id="hSp" value="93"></div></div>
+<label>Stabilization given</label><div class="tags" id="fa"></div><label>Clinical need</label><select id="hNeed"></select>
+<div class="row" style="margin-top:10px"><button class="btn l" id="treat">Treated at hub</button><button class="btn" id="match">Find hospitals</button></div><div id="matches"></div>
+<h3>Referral tickets</h3><div id="hubRefs" class="mu">None yet.</div>
+<h3>Minor illness log</h3><div class="row"><button class="btn l s" id="minor">+ Log minor case</button><b id="minorN">0</b></div></div>
+
+<div class="panel" id="p2"><h2>Verification queue</h2><div class="sub">Tap a pin on the map or use the list below.</div><div id="queue"></div></div>
+
+<div class="panel" id="p3"><h2>Emergency desk</h2><label>Hospital</label><select id="dHosp"></select><div id="status"></div><h3>Incoming referrals</h3><div id="incoming" class="mu">None.</div></div>
+
+<div class="panel" id="p4"><h2>District impact</h2><div class="sub">Live from your actions in this prototype.</div><div class="stat" id="stats"></div></div>
+</div></aside>
+
+<div id="map"><svg id="svg"><g id="g"></g></svg><div id="mk"></div><div class="hint" id="hint">Tap the map to drop a pin</div><div id="info"></div>
+<div class="leg"><span><i style="background:var(--yl)"></i>Unverified</span><span><i style="background:var(--or)"></i>Provisional</span><span><i style="background:var(--rd)"></i>Black spot</span><span><i style="background:var(--ac)"></i>Health hub</span><span><i style="background:var(--bl)"></i>Hospital</span></div>
+<div class="ctl"><button id="zi">+</button><button id="zo">−</button><button id="home" title="Khagaria">⌖</button></div></div>
+</div>
+<footer><button style="background:var(--ac)" id="callHub">📞 Call nearest hub</button><button style="background:var(--rd)" id="call108">🚑 Call 108</button></footer>
+</div><div id="toast"></div>
+<script>
+const $=id=>document.getElementById(id);
+const K=800,LON0=86.0,LAT0=25.85,W=880,HT=560;
+const P=(la,lo)=>[(lo-LON0)*K,(LAT0-la)*K],INV=(x,y)=>[LAT0-y/K,LON0+x/K];
+const km=(a,b)=>{const r=Math.PI/180,dl=(b[0]-a[0])*r,dn=(b[1]-a[1])*r,x=Math.sin(dl/2)**2+Math.cos(a[0]*r)*Math.cos(b[0]*r)*Math.sin(dn/2)**2;return 12742*Math.asin(Math.sqrt(x))};
+/* Approximate geography (hand-placed, not survey-accurate) */
+const NH31=[[25.43,86.0],[25.45,86.28],[25.502,86.469],[25.52,86.6],[25.47,86.75],[25.40,86.95],[25.38,87.1]];
+const NH107=[[25.502,86.469],[25.6,86.5],[25.72,86.55],[25.85,86.6]];
+const LOCAL=[[[25.502,86.469],[25.45,86.52],[25.43,86.565]],[[25.52,86.6],[25.56,86.66],[25.6,86.72]],[[25.502,86.469],[25.47,86.38],[25.44,86.34]]];
+const GANGA=[[25.40,86.0],[25.37,86.3],[25.35,86.5],[25.33,86.75],[25.28,87.0],[25.25,87.1]];
+const BURHI=[[25.85,86.28],[25.7,86.36],[25.6,86.42],[25.502,86.435],[25.42,86.44],[25.355,86.46]];
+const KOSI=[[25.85,86.82],[25.7,86.74],[25.58,86.78],[25.46,86.84],[25.35,86.84]];
+const DIST=[[25.74,86.22],[25.72,86.72],[25.52,86.84],[25.38,86.78],[25.36,86.48],[25.42,86.24]];
+const TOWNS=[["Khagaria",25.502,86.469,0],["Beldaur",25.45,86.52,1],["Gogri",25.43,86.565,1],["Mansi",25.52,86.6,1],["Alauli",25.58,86.545,2],["Parbatta",25.47,86.75,1],["Chautham",25.44,86.34,2],["Begusarai",25.418,86.13,0],["Bhagalpur",25.25,87.0,0]];
+const HUBS=[{n:"Khagaria Town Hub",la:25.51,lo:86.457},{n:"Beldaur Hub",la:25.46,lo:86.53},{n:"Gogri Hub",la:25.435,lo:86.575},{n:"Mansi Hub",la:25.54,lo:86.612},{n:"Parbatta Hub",la:25.48,lo:86.74}];
+const H=[{n:"Sadar Hospital Khagaria",la:25.495,lo:86.478,tier:"Secondary",caps:["trauma","ortho","antivenom","peds"],live:{bed:true,oxygen:true,icu:false,blood:true}},
+{n:"CHC Mansi",la:25.535,lo:86.598,tier:"Secondary",caps:["trauma","antivenom"],live:{bed:false,oxygen:true,icu:false,blood:false}},
+{n:"Sadar Hospital Begusarai",la:25.41,lo:86.14,tier:"District",caps:["trauma","ortho","antivenom","peds","cardio"],live:{bed:true,oxygen:true,icu:true,blood:true}},
+{n:"JLNMCH Bhagalpur",la:25.25,lo:87.0,tier:"Tertiary",caps:["trauma","ct","ortho","antivenom","peds","cardio"],live:{bed:true,oxygen:true,icu:true,blood:true}}];
+const NEEDS={"Head trauma (CT scan)":"ct","Fracture (orthopedics)":"ortho","Snakebite (anti-venom)":"antivenom","Pediatric emergency":"peds","Chest pain (cardiology)":"cardio","General trauma":"trauma"};
+const CAPN={ct:"CT scan",ortho:"Orthopedics",antivenom:"Anti-venom",peds:"Pediatrics",cardio:"Cardiology",trauma:"Trauma"};
+const TAGS=["Over-speeding","Two-wheeler","Pedestrian","No street lighting","Wrong-side driving","Animal on road"];
+const FA=["Bleeding controlled","Splinted","Oxygen started","IV fluids"];
+let pins=[{id:1,la:25.475,lo:86.37,tags:["Two-wheeler","No street lighting"],st:"unverified",t:"20 min ago"},{id:2,la:25.513,lo:86.545,tags:["Over-speeding"],st:"unverified",t:"1 hr ago"},{id:3,la:25.516,lo:86.575,tags:["Pedestrian","Over-speeding"],st:"black",t:"Verified (3 FIRs)"}];
+let refs=[],cur=null,sel=null,rt=null,car=null,minor=0,nid=10,tab=0,selTags=new Set(),selFA=new Set(["Bleeding controlled"]);
+const col={unverified:"var(--yl)",provisional:"var(--or)",black:"var(--rd)"};
+const toast=m=>{const t=$("toast");t.textContent=m;t.style.display="block";clearTimeout(t._h);t._h=setTimeout(()=>t.style.display="none",3300)};
+/* ---------- map engine ---------- */
+const map=$("map");let v={s:1,tx:0,ty:0},cw=1,ch=1,s0=1;
+const pl=(a,w,c,x="")=>`<polyline points="${a.map(p=>P(p[0],p[1]).join(",")).join(" ")}" fill="none" stroke="${c}" stroke-width="${w}" stroke-linecap="round" stroke-linejoin="round" vector-effect="non-scaling-stroke" ${x}/>`;
+$("g").innerHTML=`<rect x="-3000" y="-3000" width="7000" height="7000" fill="#f1f5ee"/><polygon points="${DIST.map(p=>P(p[0],p[1]).join(",")).join(" ")}" fill="#e3efd9" stroke="#8bb878" stroke-width="2" stroke-dasharray="8 6" vector-effect="non-scaling-stroke"/>`+pl(GANGA,16,"#b7dcf3")+pl(KOSI,10,"#c4e3f6")+pl(BURHI,6,"#c4e3f6")+LOCAL.map(a=>pl(a,5,"#dfe5da")+pl(a,3,"#fff")).join("")+[NH31,NH107].map(a=>pl(a,8,"#fff")+pl(a,5,"#f6a94b")).join("")+'<g id="rt"></g>';
+function apply(){$("g").setAttribute("transform",`translate(${v.tx} ${v.ty}) scale(${v.s})`);markers()}
+function fit(){cw=map.clientWidth;ch=map.clientHeight;s0=Math.min(cw/W,ch/HT)}
+function fly(la,lo,z){fit();const[x,y]=P(la,lo);v.s=s0*z;v.tx=cw/2-x*v.s;v.ty=ch/2-y*v.s;apply()}
+function zoomAt(f,cx,cy){const n=Math.min(s0*60,Math.max(s0*.8,v.s*f));f=n/v.s;v.tx=cx-(cx-v.tx)*f;v.ty=cy-(cy-v.ty)*f;v.s=n;apply()}
+const sc=(la,lo)=>{const[x,y]=P(la,lo);return[x*v.s+v.tx,y*v.s+v.ty]};
+const mpx=()=>v.s*K/111/1; /* px per km along latitude */
+function markers(){let h="";const z=v.s/s0;
+pins.filter(p=>p.st==="black").forEach(p=>{const[x,y]=sc(p.la,p.lo),r=.5*mpx();h+=`<div class="zone" style="left:${x-r}px;top:${y-r}px;width:${2*r}px;height:${2*r}px"></div>`});
+TOWNS.forEach(t=>{if(t[3]<=0||(t[3]===1&&z>1.6)||(t[3]===2&&z>3.4)||t[3]===0){const[x,y]=sc(t[1],t[2]);h+=`<div class="lbl" style="left:${x+6}px;top:${y-8}px;font-size:${t[3]===0?14:12}px">${t[0]}</div>`}});
+const rl=(n,a,b)=>{const[x,y]=sc(a,b);h+=`<div class="lbl" style="left:${x}px;top:${y}px;color:#3b82c4;font-style:italic">${n}</div>`};rl("Ganga",25.37,86.2);rl("Burhi Gandak",25.62,86.42);rl("Kosi",25.62,86.77);rl("NH-31",25.472,86.28);
+HUBS.forEach((x,i)=>{const[a,b]=sc(x.la,x.lo);h+=`<div class="hub" data-k="hub" data-i="${i}" style="left:${a}px;top:${b}px">+</div>`;if(z>2.2)h+=`<div class="lbl" style="left:${a+18}px;top:${b+4}px;font-size:11px;color:#0b7f58">${x.n}</div>`});
+H.forEach((x,i)=>{const[a,b]=sc(x.la,x.lo);h+=`<div class="hos" data-k="hos" data-i="${i}" style="left:${a}px;top:${b}px">H</div>`;if(z>2.2)h+=`<div class="lbl" style="left:${a+18}px;top:${b+4}px;font-size:11px;color:#2563eb">${x.n}</div>`});
+pins.filter(p=>p.st!=="rejected").forEach(p=>{const[x,y]=sc(p.la,p.lo);h+=`<div class="pin" data-k="pin" data-i="${p.id}" style="left:${x}px;top:${y}px;background:${col[p.st]}"></div>`});
+if(cur){const[x,y]=sc(cur[0],cur[1]);h+=`<div class="pin cur" style="left:${x}px;top:${y}px"></div>`}
+if(car){const[x,y]=sc(car[0],car[1]);h+=`<div class="car" style="left:${x}px;top:${y}px"></div>`}
+$("mk").innerHTML=h}
+/* pointer: pan, pinch, click */
+const ptr=new Map();let sx,sy,moved=0,pd=0;
+map.addEventListener("pointerdown",e=>{if(e.target.closest("button,#info"))return;map.setPointerCapture(e.pointerId);ptr.set(e.pointerId,[e.clientX,e.clientY]);sx=e.clientX;sy=e.clientY;moved=0;pd=0});
+map.addEventListener("pointermove",e=>{if(!ptr.has(e.pointerId))return;const o=ptr.get(e.pointerId);ptr.set(e.pointerId,[e.clientX,e.clientY]);
+if(ptr.size===2){const a=[...ptr.values()],d=Math.hypot(a[0][0]-a[1][0],a[0][1]-a[1][1]);const r=map.getBoundingClientRect();if(pd)zoomAt(d/pd,(a[0][0]+a[1][0])/2-r.left,(a[0][1]+a[1][1])/2-r.top);pd=d;moved=9;return}
+v.tx+=e.clientX-o[0];v.ty+=e.clientY-o[1];moved=Math.max(moved,Math.hypot(e.clientX-sx,e.clientY-sy));apply()});
+map.addEventListener("pointerup",e=>{if(!ptr.has(e.pointerId))return;ptr.delete(e.pointerId);pd=0;if(moved<5&&!ptr.size){const k=e.target.closest("[data-k]");if(k)pick(k.dataset.k,+k.dataset.i);else mapClick(e)}});
+map.addEventListener("pointercancel",e=>ptr.delete(e.pointerId));
+map.addEventListener("wheel",e=>{e.preventDefault();const r=map.getBoundingClientRect();zoomAt(e.deltaY<0?1.25:.8,e.clientX-r.left,e.clientY-r.top)},{passive:false});
+$("zi").onclick=()=>zoomAt(1.5,cw/2,ch/2);$("zo").onclick=()=>zoomAt(1/1.5,cw/2,ch/2);$("home").onclick=()=>fly(25.502,86.469,2.6);
+new ResizeObserver(()=>{fit();apply()}).observe(map);
+function mapClick(e){info(null);if(tab!==0)return;const r=map.getBoundingClientRect(),x=(e.clientX-r.left-v.tx)/v.s,y=(e.clientY-r.top-v.ty)/v.s;cur=INV(x,y);$("pinLoc").innerHTML=`📍 <b>${cur[0].toFixed(5)}°N, ${cur[1].toFixed(5)}°E</b>`;markers()}
+/* info card */
+function info(o){const c=$("info");if(!o){sel=null;c.style.display="none";return}c.innerHTML=o;c.style.display="block"}
+function pick(k,i){sel=[k,i];if(k==="pin"){const p=pins.find(x=>x.id===i);info(`<b>Crash report #${p.id}</b> <span class="bd" style="background:${col[p.st]}">${p.st}</span><div class="mu">${p.t} · ${p.tags.join(", ")||"no tags"}</div>`+(tab===2&&p.st!=="black"?`<div class="row" style="margin-top:8px;flex-wrap:wrap">${p.st==="unverified"?`<button class="btn o s" onclick="setSt(${p.id},'provisional')">Provisional</button>`:""}<button class="btn r s" onclick="setSt(${p.id},'black')">Black spot</button><button class="btn l s" onclick="setSt(${p.id},'rejected')">Reject</button></div>`:`<div class="mu" style="margin-top:6px">Open the Officials tab to verify.</div>`))}
+else{const o=k==="hub"?HUBS[i]:H[i];info(`<b>${o.n}</b><div class="mu">${k==="hub"?"Village health hub · Open, staff on duty":o.tier+" hospital · "+o.caps.map(c=>CAPN[c]).join(", ")}</div><div class="row" style="margin-top:8px"><button class="btn b s" onclick="routeTo(${o.la},${o.lo},'${o.n.replace(/'/g,"")}')">Directions</button><button class="btn l s" onclick="fly(${o.la},${o.lo},8)">Zoom here</button></div>`)}
+fillMap()}
+function fillMap(){}
+function from(){return cur||(car)||[25.502,86.469]}
+function routeTo(la,lo,n){const a=from(),b=[la,lo],d=km(a,b)*1.3,t=Math.round(d/35*60);rt=[a,b];$("rt").innerHTML=pl(rt,5,"#2563eb",'stroke-dasharray="1 9"');$("routeOut").innerHTML=`<b>${n}</b>: about ${d.toFixed(1)} km by road, ${t} min by vehicle`;toast(`${n}: ${d.toFixed(1)} km, about ${t} min`)}
+function routeNearest(k){const a=from(),L=(k==="hub"?HUBS:H).map(o=>({o,d:km(a,[o.la,o.lo])})).sort((x,y)=>x.d-y.d)[0].o;routeTo(L.la,L.lo,L.n)}
+/* search */
+$("places").innerHTML=[...TOWNS.map(t=>t[0]),...HUBS.map(h=>h.n),...H.map(h=>h.n)].map(n=>`<option value="${n}">`).join("");
+$("q").onchange=e=>{const n=e.target.value.toLowerCase(),a=[...TOWNS.map(t=>[t[0],t[1],t[2]]),...HUBS.map(h=>[h.n,h.la,h.lo]),...H.map(h=>[h.n,h.la,h.lo])].find(x=>x[0].toLowerCase()===n||x[0].toLowerCase().includes(n));if(a)fly(a[1],a[2],7);else toast("Place not found")};
+/* report */
+const mkTags=(el,list,set)=>{el.innerHTML="";list.forEach(t=>{const b=document.createElement("button");b.className="tag"+(set.has(t)?" on":"");b.textContent=t;b.onclick=()=>{set.has(t)?set.delete(t):set.add(t);b.classList.toggle("on")};el.appendChild(b)})};
+mkTags($("tags"),TAGS,selTags);mkTags($("fa"),FA,selFA);
+$("voice").onclick=()=>toast("Voice note recorded (simulated, 10 s)");
+$("gps").onclick=()=>{const ok=p=>{cur=[p.coords.latitude,p.coords.longitude];fly(cur[0],cur[1],8);$("pinLoc").innerHTML=`📍 <b>${cur[0].toFixed(5)}°N, ${cur[1].toFixed(5)}°E</b>`};navigator.geolocation?navigator.geolocation.getCurrentPosition(ok,()=>toast("Location blocked. Tap the map instead.")):toast("Tap the map to set location")};
+$("submitPin").onclick=()=>{if(!cur)return toast("Tap the map to choose the crash spot first.");pins.push({id:nid++,la:cur[0],lo:cur[1],tags:[...selTags],st:"unverified",t:"just now"});cur=null;selTags.clear();mkTags($("tags"),TAGS,selTags);$("pinLoc").textContent="Sent anonymously. Pending verification.";toast("Yellow pin added. Open Officials to verify it.");refresh()};
+/* driver alert */
+function along(t){const seg=NH31.slice(0,-1).map((a,i)=>km(a,NH31[i+1]));let w=t/100*seg.reduce((a,b)=>a+b);for(let i=0;i<seg.length;i++){if(w<=seg[i]||i===seg.length-1){const f=Math.min(1,w/seg[i]);return[NH31[i][0]+(NH31[i+1][0]-NH31[i][0])*f,NH31[i][1]+(NH31[i+1][1]-NH31[i][1])*f]}w-=seg[i]}}
+let spoken=0;$("drive").oninput=e=>{car=along(+e.target.value);const b=pins.filter(p=>p.st==="black"||p.st==="provisional").map(p=>km(car,[p.la,p.lo])).sort((a,b)=>a-b)[0];const o=$("driveOut");
+if(b!==undefined&&b<.5){o.innerHTML=`<div class="alert">⚠ Danger zone ahead (${Math.round(b*1000)} m). Slow down.</div>`;if(!spoken&&window.speechSynthesis){spoken=1;try{speechSynthesis.speak(new SpeechSynthesisUtterance("Warning. Accident prone stretch ahead. Slow down."))}catch(_){}}}else{spoken=0;o.textContent="Clear road ahead."}
+const r=map.getBoundingClientRect(),[x,y]=sc(car[0],car[1]);if(x<60||y<60||x>cw-60||y>ch-60)fly(car[0],car[1],v.s/s0);else markers()};
+/* referral */
+const needIdx=()=>Object.keys(NEEDS);
+const fill=(id,a)=>$(id).innerHTML=a.map((t,i)=>`<option value="${i}">${t}</option>`).join("");
+fill("vNeed",needIdx());fill("hNeed",needIdx());fill("vHub",HUBS.map(h=>h.n));fill("hHub",HUBS.map(h=>h.n));fill("dHosp",H.map(h=>h.n));
+function rank(need,hub){const cap=NEEDS[needIdx()[need]],hb=HUBS[hub];return H.map((h,i)=>{const d=km([h.la,h.lo],[hb.la,hb.lo])*1.3,spec=h.caps.includes(cap),ok=spec&&h.live.bed;return{i,h,d,spec,ok,cap}}).sort((a,b)=>(b.ok-a.ok)||(b.spec-a.spec)||(a.d-b.d))}
+$("match").onclick=()=>{$("matches").innerHTML=rank(+$("hNeed").value,+$("hHub").value).map(r=>`<div class="it"><b>${r.h.n}</b> <span class="bd" style="background:${r.ok?"var(--ac)":r.spec?"var(--or)":"#94a3b8"}">${r.ok?"Best match":r.spec?"Capable, no bed":"No "+CAPN[r.cap]}</span><div class="mu">${r.h.tier} · ${r.d.toFixed(0)} km · Bed ${r.h.live.bed?"✔":"✘"} O₂ ${r.h.live.oxygen?"✔":"✘"} ICU ${r.h.live.icu?"✔":"✘"} Blood ${r.h.live.blood?"✔":"✘"}</div><button class="btn s" style="margin-top:6px" onclick="sendRef(${r.i},'Hub',$('hName').value,+$('hNeed').value,+$('hHub').value)">Send referral</button></div>`).join("")};
+function sendRef(hi,src,name,need,hub){const d=km([H[hi].la,H[hi].lo],[HUBS[hub].la,HUBS[hub].lo])*1.3;refs.push({id:nid++,name,need:needIdx()[need],hub:HUBS[hub].n,hi,src,st:"pending",d,vit:src==="Hub"?`Pulse ${$("hHR").value}, BP ${$("hBP").value}, SpO2 ${$("hSp").value}`:"Self-reported",fa:src==="Hub"?[...selFA].join(", ")||"None":"None",eta:Math.round(d/40*60)+5});toast("Referral sent. "+H[hi].n+" desk notified.");refresh()}
+$("vSend").onclick=()=>{const n=+$("vNeed").value,h=+$("vHub").value;sendRef(rank(n,h)[0].i,"Villager","Villager (anonymous)",n,h)};
+$("treat").onclick=()=>{minor++;toast("Logged as treated at hub.");refresh()};$("minor").onclick=()=>{minor++;refresh()};
+const qr=id=>{let s="",x=id*2654435761>>>0;for(let r=0;r<9;r++)for(let c=0;c<9;c++){x=(x*1664525+1013904223)>>>0;if(x>>>28&1)s+=`<rect x="${c*5}" y="${r*5}" width="5" height="5" fill="#14202e"/>`}return`<svg width="45" height="45" viewBox="0 0 45 45" style="position:static;flex:none">${s}</svg>`};
+const stC={pending:"var(--or)",accepted:"var(--ac)",diverted:"var(--rd)"},stT={pending:"Awaiting hospital",accepted:"Accepted and ready",diverted:"Diverted (full)"};
+function renderRefs(){const L=refs.slice().reverse();$("hubRefs").innerHTML=L.length?L.map(r=>`<div class="it tk">${qr(r.id)}<div><b>${r.name}</b> → ${H[r.hi].n}<br><span class="bd" style="background:${stC[r.st]}">${stT[r.st]}</span> <span class="mu">ETA ${r.eta} min</span>${r.st==="diverted"?'<div class="mu">Pick another hospital and resend.</div>':""}</div></div>`).join(""):"None yet.";
+const m=L.find(r=>r.src==="Villager");$("vStatus").innerHTML=m?`<div class="it"><span class="bd" style="background:${stC[m.st]}">${stT[m.st]}</span> ${H[m.hi].n}, ETA ${m.eta} min</div>`:"";renderDesk()}
+function renderDesk(){const i=+$("dHosp").value||0,h=H[i];$("status").innerHTML=`<div class="mu">${h.tier} · ${h.caps.map(c=>CAPN[c]).join(", ")}</div>`+["bed","oxygen","icu","blood"].map(k=>`<div class="it row"><span>${{bed:"Trauma bed",oxygen:"Oxygen",icu:"ICU",blood:"Blood bank"}[k]}</span><button class="btn s ${h.live[k]?"":"l"}" onclick="tog(${i},'${k}')">${h.live[k]?"Available":"Unavailable"}</button></div>`).join("");
+const inc=refs.filter(r=>r.hi===i).reverse();$("incoming").innerHTML=inc.length?inc.map(r=>`<div class="it"><b>${r.name}</b>: ${r.need}<div class="mu">From ${r.hub} · ${r.vit}<br>Stabilization: ${r.fa}<br>Ambulance ETA ${r.eta} min</div>${r.st==="pending"?`<div class="row" style="margin-top:6px"><button class="btn s" onclick="resp(${r.id},'accepted')">Accepted and ready</button><button class="btn r s" onclick="resp(${r.id},'diverted')">Divert (full)</button></div>`:`<span class="bd" style="background:${stC[r.st]}">${stT[r.st]}</span>`}</div>`).join(""):"None for this hospital."}
+$("dHosp").onchange=renderDesk;window.tog=(i,k)=>{H[i].live[k]=!H[i].live[k];refresh()};window.resp=(id,s)=>{refs.find(r=>r.id===id).st=s;refresh()};
+/* verification */
+function renderQueue(){const q=pins.filter(p=>p.st==="unverified"||p.st==="provisional");$("queue").innerHTML=q.length?q.map(p=>`<div class="box"><b>Pin #${p.id}</b> <span class="bd" style="background:${col[p.st]}">${p.st}</span><div class="mu">${p.t} · ${p.tags.join(", ")||"no tags"}</div><div class="mu" style="margin:6px 0">Cross-check: <label style="display:inline"><input type="checkbox" style="width:auto"> 108 log</label> <label style="display:inline"><input type="checkbox" style="width:auto"> FIR</label> <label style="display:inline"><input type="checkbox" style="width:auto"> Hub arrival</label></div><div class="row" style="flex-wrap:wrap"><button class="btn l s" onclick="fly(${p.la},${p.lo},9)">Locate</button>${p.st==="unverified"?`<button class="btn o s" onclick="setSt(${p.id},'provisional')">Provisional</button>`:""}<button class="btn r s" onclick="setSt(${p.id},'black')">Black spot</button><button class="btn l s" onclick="setSt(${p.id},'rejected')">Reject</button></div></div>`).join(""):'<div class="mu">Queue empty. Report a crash on the map first.</div>'}
+window.setSt=(id,s)=>{pins.find(p=>p.id===id).st=s;info(null);toast(s==="black"?"Promoted. Red zone is now live on the map.":s==="provisional"?"Provisional alert active for nearby traffic.":"Pin rejected.");refresh()};
+function renderStats(){const bs=pins.filter(p=>p.st==="black"),un=bs.filter(p=>Math.min(...HUBS.map(h=>km([h.la,h.lo],[p.la,p.lo])))>5),tot=minor+refs.length;
+$("stats").innerHTML=`<div><b>${pins.filter(p=>p.st==="unverified").length}</b>Unverified pins</div><div><b>${bs.length}</b>Verified black spots</div><div><b style="color:var(--rd)">${un.length}</b>Black spots far from a hub (5 km+)</div><div><b>${refs.length}</b>Referrals (${refs.filter(r=>r.st==="accepted").length} accepted)</div><div><b>${refs.length?Math.round(refs.reduce((a,r)=>a+r.eta,0)/refs.length)+" min":"–"}</b>Avg hub-to-hospital time</div><div><b>${tot?Math.round(minor/tot*100):0}%</b>Treated at hub</div>`}
+function refresh(){markers();renderQueue();renderRefs();renderStats();$("minorN").textContent=minor}
+/* tabs */
+const TN=[["📍","Report"],["🩺","Hub"],["🛡","Officials"],["🏥","Hospital"],["📊","Impact"]];
+$("tabs").innerHTML=TN.map((t,i)=>`<button class="${i?"":"on"}" data-i="${i}"><span>${t[0]}</span>${t[1]}</button>`).join("");
+$("tabs").onclick=e=>{const b=e.target.closest("button");if(!b)return;tab=+b.dataset.i;document.querySelectorAll(".tabs button").forEach((x,j)=>x.classList.toggle("on",j===tab));document.querySelectorAll(".panel").forEach((p,j)=>p.classList.toggle("on",j===tab));$("hint").style.display=tab===0?"block":"none";info(null)};
+$("callHub").onclick=()=>toast("Calling Khagaria Town Hub. GPS sent (simulated).");$("call108").onclick=()=>toast("Calling 108 ambulance with exact GPS (simulated).");
+fit();fly(25.502,86.469,2.6);refresh();
+</script></body></html>
